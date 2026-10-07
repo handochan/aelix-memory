@@ -21,7 +21,7 @@ def test_off_never_creates_store_and_agent_cannot_enable(store, scope):
     assert store.list(scope) == []
     store.set_mode(scope, "off")
     with pytest.raises(ConsentError):
-        store.add(scope, draft(), origin="agent")
+        store.add(scope, draft(), origin="agent", review=True)
     with pytest.raises(ConsentError):
         store.search(scope, "pytest")
     assert not store.home.exists()
@@ -36,13 +36,18 @@ def test_restart_read_mode_and_no_write_hash(enabled, scope):
     assert restarted.search(scope, "pytest").hits[0].memory.id == memory.id
     assert restarted.get(scope, memory.id, agent=True) == memory
     with pytest.raises(ConsentError):
-        restarted.add(scope, draft("new"), origin="agent")
+        restarted.add(scope, draft("new"), origin="agent", review=True)
     assert enabled.path.read_bytes() == before
 
 
 def test_pending_is_not_evidence_and_approval_does_not_relabel(enabled, scope):
     proposal = enabled.add(
-        scope, draft(), origin="agent", source_session="session-1", source_call="call-1"
+        scope,
+        draft(),
+        origin="agent",
+        review=True,
+        source_session="session-1",
+        source_call="call-1",
     )
     assert not enabled.search(scope, "pytest").hits
     with pytest.raises(MemoryError):
@@ -56,12 +61,12 @@ def test_pending_is_not_evidence_and_approval_does_not_relabel(enabled, scope):
 
 def test_disable_blocks_all_agent_paths_but_keeps_user_management(enabled, scope):
     active = enabled.add(scope, draft())
-    pending = enabled.add(scope, draft("proposal"), origin="agent")
+    pending = enabled.add(scope, draft("proposal"), origin="agent", review=True)
     enabled.set_mode(scope, "off")
     for operation in (
         lambda: enabled.search(scope, "pytest"),
         lambda: enabled.get(scope, active.id, agent=True),
-        lambda: enabled.add(scope, draft(), origin="agent"),
+        lambda: enabled.add(scope, draft(), origin="agent", review=True),
         lambda: enabled.approve(scope, pending.id),
     ):
         with pytest.raises(ConsentError):
@@ -102,7 +107,9 @@ def test_subdirectories_and_symlink_alias_have_same_scope(scope, tmp_path):
 
 def test_compare_and_swap_preserves_old_revision_and_rejects_stale_approval(enabled, scope):
     old = enabled.add(scope, draft("Use poetry.", key="test-runner"))
-    pending = enabled.add(scope, draft(key="test-runner"), origin="agent", supersedes=old.id)
+    pending = enabled.add(
+        scope, draft(key="test-runner"), origin="agent", review=True, supersedes=old.id
+    )
     current = enabled.add(scope, draft("Use hatch.", key="test-runner"), supersedes=old.id)
     with pytest.raises(ConflictError):
         enabled.approve(scope, pending.id)
@@ -143,6 +150,7 @@ def test_forget_removes_whole_family_pending_and_search_plaintext(enabled, scope
         scope,
         draft(marker + " proposal", key="secret-free-note"),
         origin="agent",
+        review=True,
         supersedes=current.id,
     )
     assert enabled.forget(scope, current.id) == 3
@@ -155,7 +163,7 @@ def test_forget_removes_whole_family_pending_and_search_plaintext(enabled, scope
 def test_parallel_proposals_persist_and_same_key_approval_has_one_winner(enabled, scope):
     def add(index):
         return Store(enabled.home).add(
-            scope, draft(f"Lesson {index}", key="same-key"), origin="agent"
+            scope, draft(f"Lesson {index}", key="same-key"), origin="agent", review=True
         )
 
     with ThreadPoolExecutor(max_workers=8) as pool:
@@ -175,8 +183,8 @@ def test_parallel_proposals_persist_and_same_key_approval_has_one_winner(enabled
 
 
 def test_deduplicate_retry_and_unicode_normalization(enabled, scope):
-    first = enabled.add(scope, draft("메모리 사용", title="기억"), origin="agent")
-    duplicate = enabled.add(scope, draft("메모리 사용", title="기억"), origin="agent")
+    first = enabled.add(scope, draft("메모리 사용", title="기억"), origin="agent", review=True)
+    duplicate = enabled.add(scope, draft("메모리 사용", title="기억"), origin="agent", review=True)
     assert first.id == duplicate.id
     assert len(enabled.list(scope, status="pending")) == 1
 
@@ -212,7 +220,7 @@ def test_storage_symlink_and_insecure_permissions_are_refused(store, scope, tmp_
 
 
 def test_approve_and_discard_are_explicit(enabled, scope):
-    pending = enabled.add(scope, draft("proposal"), origin="agent")
+    pending = enabled.add(scope, draft("proposal"), origin="agent", review=True)
     enabled.discard(scope, pending.id)
     with pytest.raises(MemoryError):
         enabled.approve(scope, pending.id)
@@ -225,13 +233,13 @@ def test_consent_revoked_between_proposal_attempts(enabled, scope):
     another = Store(enabled.home)
     another.set_mode(scope, "read")
     with pytest.raises(ConsentError):
-        enabled.add(scope, draft("should not persist"), origin="agent")
+        enabled.add(scope, draft("should not persist"), origin="agent", review=True)
     assert another.list(scope, status="pending") == []
 
 
 def test_forget_key_deletes_unapproved_initial_proposals_too(enabled, scope):
-    first = enabled.add(scope, draft("First value", key="runner"), origin="agent")
-    second = enabled.add(scope, draft("Second value", key="runner"), origin="agent")
+    first = enabled.add(scope, draft("First value", key="runner"), origin="agent", review=True)
+    second = enabled.add(scope, draft("Second value", key="runner"), origin="agent", review=True)
     enabled.approve(scope, first.id)
     enabled.forget(scope, first.id)
     with pytest.raises(MemoryError):

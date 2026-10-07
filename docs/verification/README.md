@@ -1,4 +1,47 @@
-# Alpha verification
+# Aelix Memory verification
+
+## Current automatic memory (0.1.0)
+
+The current contract is [ADR-0002](../decisions/0002-natural-automatic-memory.md).
+ON enables automatic extraction/storage after completed exchanges with no record
+approval or memory write tool. OFF/READ remain separate, persistent choices.
+
+- Source checks: 75 passed with the optional real semantic test skipped;
+  ruff lint/format and pyright pass with the pinned host installed.
+- Built 0.1.0 wheel installed in the isolated environment with the pinned host
+  and provisioned local multilingual model: 76 passed in 7.08s. Host manifest
+  verification reports all one endpoint BOUND, exit 0.
+- [live-automatic-memory.json](live-automatic-memory.json): OpenRouter
+  `openai/gpt-5.4-mini`, six fresh host processes, tools disabled, zero manual memory
+  writes and zero approvals. Normal pnpm preference was automatically extracted,
+  recalled in a fresh session, corrected to npm and recalled again. OFF returned
+  UNKNOWN and created no store; injected memory remained absent from session files.
+- Provider integration handles the actual canonical `AssistantDoneEvent`. A regression
+  first reproduced failure with the deprecated event subclass check, then passed
+  with the native event class. Deterministic extractor tests alone had not verified it.
+- Legacy schema v1 is read without mutation and upgraded transactionally on first
+  write. Legacy pending notes stay pending. New automatic notes carry matched source
+  quotes/roles and session/turn receipts. OFF-to-ON cycles revoke old job generations.
+- Automatic vectors update without manual reindex, and stale inference cannot overwrite
+  a stronger user preference, newer revision or a forgotten family.
+
+Reproduce with a host-installed current wheel and normal host credentials:
+
+```bash
+python tools/live_automatic_memory.py --provider openrouter --model openai/gpt-5.4-mini
+```
+
+The fixture uses only synthetic preferences and temporary stores/sessions. Auxiliary
+extraction uses the current model route with a 1024-token output cap and a 15-second
+job deadline. Auxiliary usage is separate from the host main-turn cost ledger today;
+the full cost integration is tracked as further hardening. Complete public benchmark
+accuracy, automatic consolidation, crash recovery of unfinished jobs and adversarial
+LLM instruction following remain unmeasured/unimplemented scope.
+
+## Historical 0.1.0a1 baseline
+
+The following records describe the prior implementation at source
+`9559fb1e6121586a1d88bf9b1057fc128b6a3197`; its per-record approval design is superseded.
 
 Date: 2026-10-08 (Asia/Seoul). Local platform: macOS arm64, CPython 3.12.13,
 SQLite 3.53.1. No user memory or real project transcript is included in these artifacts.

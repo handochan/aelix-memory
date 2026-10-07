@@ -65,6 +65,11 @@ def clean_text(value: str, name: str, max_bytes: int) -> str:
     return value
 
 
+def contains_secret(value: str) -> bool:
+    """A conservative signal for excluding an exchange before automatic extraction."""
+    return bool(_SECRET.search(value))
+
+
 @dataclass(frozen=True)
 class Draft:
     title: str
@@ -130,13 +135,16 @@ class Memory:
     valid_until: str | None
     expires_at: str | None
     supersedes: str | None
+    evidence_quote: str | None = None
+    source_role: Literal["user", "assistant"] | None = None
+    source_verification: Literal["declared", "matched_quote"] = "declared"
 
     @property
     def citation(self) -> str:
         return f"memory://{self.scope}/{self.id}"
 
     def to_dict(self) -> dict:
-        return {**asdict(self), "citation": self.citation, "source_verification": "declared"}
+        return {**asdict(self), "citation": self.citation}
 
 
 @dataclass(frozen=True)

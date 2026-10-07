@@ -20,7 +20,8 @@ class Parser(argparse.ArgumentParser):
 
 def parser() -> Parser:
     command = Parser(
-        prog="aelix-memory", description="Choose, review and manage local project memory."
+        prog="aelix-memory",
+        description="Turn natural project memory on/off; inspection and export are optional.",
     )
     command.add_argument("--project", default=os.getcwd(), help="Project directory (default: cwd)")
     operations = command.add_subparsers(dest="command")
@@ -71,7 +72,8 @@ def run(store: Store, scope: Scope, args: argparse.Namespace) -> str:
                 "scope": scope.id,
                 "store_exists": store.path.exists(),
                 "semantic": store.embedder is not None,
-                "write_policy": "user approval required for every agent proposal",
+                "automatic_learning": mode == "on",
+                "write_policy": "Automatic extraction after completed conversations; no per-memory approval.",
             }
         )
     if name in {"remember", "update"}:

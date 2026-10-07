@@ -8,6 +8,7 @@ import math
 import os
 import sqlite3
 import stat
+import threading
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
@@ -40,7 +41,8 @@ _SCHEMA = (
         origin TEXT NOT NULL, source_session TEXT, source_call TEXT,
         status TEXT NOT NULL CHECK(status IN ('pending','active','superseded')),
         created_at TEXT NOT NULL, valid_from TEXT, valid_until TEXT, expires_at TEXT,
-        supersedes TEXT, fingerprint TEXT NOT NULL)""",
+        supersedes TEXT, evidence_quote TEXT, source_role TEXT,
+        source_verification TEXT NOT NULL DEFAULT 'declared', fingerprint TEXT NOT NULL)""",
     "CREATE UNIQUE INDEX active_keys ON memories(scope,key) WHERE status='active' AND key IS NOT NULL",
     "CREATE INDEX scope_status ON memories(scope,status)",
     "CREATE INDEX families ON memories(scope,family_id)",
@@ -61,7 +63,8 @@ _FIELDS = tuple(Memory.__dataclass_fields__)
 
 
 def _memory(row: sqlite3.Row) -> Memory:
-    data = {name: row[name] for name in _FIELDS}
+    available = set(row.keys())
+    data = {name: row[name] for name in _FIELDS if name in available}
     data["tags"] = tuple(json.loads(data["tags"]))
     data["related_ids"] = tuple(json.loads(data["related_ids"]))
     return Memory(**data)
@@ -121,8 +124,15 @@ class Store:
                     raise MemoryError("Refusing an unversioned, non-empty memory database.")
                 for statement in _SCHEMA:
                     connection.execute(statement)
-                connection.execute("PRAGMA user_version=1")
-            elif version != 1:
+                connection.execute("PRAGMA user_version=2")
+            elif version == 1 and write:
+                connection.execute("ALTER TABLE memories ADD COLUMN evidence_quote TEXT")
+                connection.execute("ALTER TABLE memories ADD COLUMN source_role TEXT")
+                connection.execute(
+                    "ALTER TABLE memories ADD COLUMN source_verification TEXT NOT NULL DEFAULT 'declared'"
+                )
+                connection.execute("PRAGMA user_version=2")
+            elif version not in {1, 2}:
                 raise MemoryError("Unsupported memory schema; no data was changed.")
             yield connection
             connection.commit()
@@ -140,6 +150,30 @@ class Store:
     def mode(self, scope: Scope) -> Mode:
         with self._connect() as connection:
             return self._mode(connection, scope) if connection else "off"
+
+    @staticmethod
+    def _consent_token(connection: sqlite3.Connection, scope: Scope) -> int:
+        row = connection.execute(
+            "SELECT max(id) FROM audit WHERE scope=? AND action LIKE 'mode:%'", (scope.id,)
+        ).fetchone()
+        return int(row[0] or 0)
+
+    def consent_token(self, scope: Scope) -> int:
+        with self._connect() as connection:
+            return self._consent_token(connection, scope) if connection else 0
+
+    @staticmethod
+    def _check_learning(
+        connection: sqlite3.Connection,
+        scope: Scope,
+        token: int | None,
+        cancelled: threading.Event | None,
+    ) -> None:
+        Store._require(connection, scope, write=True)
+        if token is not None and token != Store._consent_token(connection, scope):
+            raise ConsentError("Memory consent changed; the earlier learning job was discarded.")
+        if cancelled is not None and cancelled.is_set():
+            raise ConsentError("Memory learning was cancelled.")
 
     @staticmethod
     def _require(connection: sqlite3.Connection, scope: Scope, *, write: bool = False) -> None:
@@ -233,6 +267,11 @@ class Store:
         supersedes: str | None = None,
         source_session: str | None = None,
         source_call: str | None = None,
+        review: bool = False,
+        consent_token: int | None = None,
+        cancelled: threading.Event | None = None,
+        evidence_quote: str | None = None,
+        source_role: Literal["user", "assistant"] | None = None,
     ) -> Memory:
         draft = draft.validated()
         if origin not in ("user", "agent"):
@@ -241,10 +280,16 @@ class Store:
             clean_text(source_session, "source_session", 200) if source_session else None
         )
         source_call = clean_text(source_call, "source_call", 200) if source_call else None
+        if source_role not in {None, "user", "assistant"}:
+            raise MemoryError("Invalid evidence source role.")
+        if evidence_quote is not None:
+            evidence_quote = clean_text(evidence_quote, "evidence_quote", 640)
+            if source_role is None or evidence_quote != draft.content:
+                raise MemoryError("Automatic content must equal the matched source quote.")
         with self._connect(write=True) as connection:
             if connection is None:
                 raise ConsentError("Memory is OFF. Enable it explicitly first.")
-            self._require(connection, scope, write=True)
+            self._check_learning(connection, scope, consent_token, cancelled)
             at = now_iso()
             if draft.expires_at and draft.expires_at <= at:
                 raise MemoryError("expires_at must be in the future.")
@@ -266,7 +311,14 @@ class Store:
             )
             if current and (previous is None or current["id"] != previous.id):
                 raise ConflictError("This key already exists; update using its current memory ID.")
-            status = "pending" if origin == "agent" else "active"
+            status = "pending" if review else "active"
+            if current and origin == "agent" and not review:
+                if current["content"] == draft.content and current["kind"] == draft.kind:
+                    return _memory(current)
+                if (
+                    current["source_role"] == "user" or current["origin"] == "user"
+                ) and source_role == "assistant":
+                    return _memory(current)
             duplicate = connection.execute(
                 "SELECT * FROM memories WHERE scope=? AND fingerprint=? AND status=? AND origin=? AND supersedes IS ?",
                 (scope.id, draft.fingerprint, status, origin, previous.id if previous else None),
@@ -279,7 +331,7 @@ class Store:
             pending = connection.execute(
                 "SELECT count(*) FROM memories WHERE scope=? AND status='pending'", (scope.id,)
             ).fetchone()[0]
-            if count >= 10000 or (origin == "agent" and pending >= 100):
+            if count >= 10000 or (review and pending >= 100):
                 raise MemoryError(
                     "Memory capacity reached; review or forget records before adding more."
                 )
@@ -316,6 +368,9 @@ class Store:
                 valid_until=None,
                 expires_at=draft.expires_at,
                 supersedes=previous.id if previous else None,
+                evidence_quote=evidence_quote,
+                source_role=source_role,
+                source_verification="matched_quote" if evidence_quote is not None else "declared",
             )
             if previous and status == "active":
                 connection.execute(
@@ -339,7 +394,16 @@ class Store:
             if status == "active":
                 self._index(connection, memory)
             self._audit(connection, scope, status, mid)
+            self._check_learning(connection, scope, consent_token, cancelled)
             return memory
+
+    def current_keys(self, scope: Scope, *, limit: int = 200) -> dict[str, Memory]:
+        """A bounded extraction snapshot; callers must already be in an enabled session."""
+        return {
+            m.key: m
+            for m in self.list(scope, limit=limit)
+            if m.key is not None and self._visible(m, now_iso())
+        }
 
     def approve(self, scope: Scope, mid: str) -> Memory:
         with self._connect(write=True) as connection:
@@ -455,7 +519,7 @@ class Store:
 
     def export(self, scope: Scope) -> dict:
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "project": str(scope.root),
             "scope": scope.id,
             "exported_at": now_iso(),
@@ -610,3 +674,54 @@ class Store:
                 )
             self._audit(connection, scope, "reindex")
         return len(records)
+
+    def index_missing(
+        self,
+        scope: Scope,
+        *,
+        consent_token: int,
+        cancelled: threading.Event | None = None,
+        limit: int = 24,
+    ) -> int:
+        """Automatic bounded local indexing, including newly saved notes and older records."""
+        if self.embedder is None:
+            return 0
+        if self.mode(scope) != "on" or self.consent_token(scope) != consent_token:
+            raise ConsentError("Memory learning is no longer enabled.")
+        model = clean_text(self.embedder.fingerprint, "model fingerprint", 200)
+        with self._connect() as connection:
+            if connection is None:
+                return 0
+            self._check_learning(connection, scope, consent_token, cancelled)
+            at = now_iso()
+            rows = connection.execute(
+                "SELECT m.* FROM memories m LEFT JOIN vectors v ON v.memory_id=m.id AND v.model=? WHERE m.scope=? AND m.status='active' AND v.memory_id IS NULL AND (m.expires_at IS NULL OR m.expires_at>?) ORDER BY m.created_at DESC,m.id LIMIT ?",
+                (model, scope.id, at, min(limit, 64)),
+            ).fetchall()
+            records = [_memory(row) for row in rows]
+        if not records:
+            return 0
+        encoded = self.embedder.encode([m.title + "\n" + m.content for m in records])
+        if len(encoded) != len(records):
+            raise MemoryError("Embedding provider returned the wrong number of vectors.")
+        vectors = [normalized(v) for v in encoded]
+        if len({len(v) for v in vectors}) > 1:
+            raise MemoryError("Embedding dimensions must be consistent.")
+        count = 0
+        with self._connect(write=True) as connection:
+            assert connection is not None
+            self._check_learning(connection, scope, consent_token, cancelled)
+            for memory, vector in zip(records, vectors, strict=True):
+                try:
+                    current = self._resolve(connection, scope, memory.id)
+                except MemoryError:
+                    continue
+                if not self._visible(current, now_iso()):
+                    continue
+                connection.execute(
+                    "INSERT OR REPLACE INTO vectors(memory_id,model,dimension,vector) VALUES(?,?,?,?)",
+                    (memory.id, model, len(vector), json.dumps(vector)),
+                )
+                count += 1
+            self._check_learning(connection, scope, consent_token, cancelled)
+        return count
