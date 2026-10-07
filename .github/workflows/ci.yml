@@ -1,6 +1,7 @@
 name: Memory quality and host integration
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
@@ -9,6 +10,7 @@ permissions:
 jobs:
   core:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python: ['3.11', '3.12', '3.13']

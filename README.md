@@ -39,6 +39,7 @@ aelix-memory --project /path/to/repo export --output memories.json
 aelix-memory --project /path/to/repo forget <id>
 ```
 
+CLI pipe output and export files use UTF-8, preserving Korean and Unicode paths.
 Use `aelix-memory --help` or `/memory help` for the full command list. Keyed
 changes use `update <id> <text>`; a stale revision is rejected. `history <id>`
 shows the retained versions, and `search --as-of <ISO timestamp> <query>` answers

@@ -24,7 +24,7 @@ def test_cli_model_free_choice_save_restart_update_export_forget(tmp_path, monke
     output = tmp_path / "export.json"
     assert main(prefix + ["export", "--output", str(output)]) == 0
     capsys.readouterr()
-    assert len(json.loads(output.read_text())["memories"]) == 2
+    assert len(json.loads(output.read_text(encoding="utf-8"))["memories"]) == 2
     if os.name == "posix":
         assert os.stat(output).st_mode & 0o077 == 0
     original = output.read_bytes()
@@ -48,4 +48,18 @@ def test_package_import_is_side_effect_free_without_host(tmp_path):
         env={**os.environ, "AELIX_MEMORY_HOME": str(home)},
         check=True,
     )
+    assert not home.exists()
+
+
+def test_cli_redirected_unicode_output_is_utf8_even_with_legacy_locale(tmp_path):
+    project = tmp_path / "한국어-프로젝트"
+    project.mkdir()
+    home = tmp_path / "absent-memory"
+    completed = subprocess.run(
+        [sys.executable, "-m", "aelix_memory", "--project", str(project), "status"],
+        env={**os.environ, "AELIX_MEMORY_HOME": str(home), "PYTHONIOENCODING": "cp1252"},
+        capture_output=True,
+    )
+    assert completed.returncode == 0, completed.stderr.decode("utf-8", errors="replace")
+    assert "한국어-프로젝트" in json.loads(completed.stdout.decode("utf-8"))["project"]
     assert not home.exists()

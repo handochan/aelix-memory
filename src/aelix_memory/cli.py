@@ -26,6 +26,10 @@ def terminal_text(value: str) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Pipes/files must carry portable UTF-8, including Windows legacy code pages.
+    for stream in (sys.stdout, sys.stderr):
+        if not stream.isatty() and hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     try:
         args = parser().parse_args(argv)
         scope = Scope.for_project(args.project)

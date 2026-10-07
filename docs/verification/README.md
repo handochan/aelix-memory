@@ -7,8 +7,8 @@ SQLite 3.53.1. No user memory or real project transcript is included in these ar
 
 | Gate | Evidence |
 | --- | --- |
-| Core + deterministic real host tests | `uv run pytest -q`: 50 passed; real semantic test requires a provisioned model and skips by default |
-| Complete installed-wheel suite | Fresh environment, latest pinned host, local semantic model, network blocked for semantic test: 51 passed in 3.56s |
+| Core + deterministic real host tests | `uv run pytest -q`: 51 passed; real semantic test requires a provisioned model and skips by default |
+| Complete installed-wheel suite | Fresh environment, latest pinned host, local semantic model, network blocked for semantic test: 52 passed |
 | Lint, formatting, types | `uv run ruff check .`, `uv run ruff format --check .`, `uv run pyright`: pass; pyright runs with the host installed |
 | Built artifact | `uv build`: sdist and wheel; opened wheel has the manifest and the `aelix.extensions` entry point, no private state/transcripts/bytecode |
 | Installed artifact | Fresh venv + actual wheel + host: `aelix extension verify aelix-memory` reports `BOUND`, exit 0; host tests pass from the installed artifact |
@@ -23,6 +23,9 @@ pending isolation, source-aware deduplication, UTC validity/expiry/as-of, scope/
 isolation, family erasure (including unapproved initial proposals), credential/control
 rejection, literal FTS handling, escaped byte-budgeted context, host plan permissions,
 non-persistent recall, explicit tool selection, and OFF during slow embedding.
+Windows CI initially caught a test helper reading a UTF-8 export with its legacy
+default encoding. The helper now uses UTF-8 explicitly, and an additional regression
+verifies real CLI pipe output preserves Korean paths even under CP1252.
 
 ## Real semantic test reproduction
 
