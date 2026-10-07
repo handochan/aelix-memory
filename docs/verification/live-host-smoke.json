@@ -1,0 +1,35 @@
+{
+  "at": "2026-10-07T15:42:09.178178+00:00",
+  "provider": "openrouter",
+  "model": "openai/gpt-5.4-mini",
+  "python": "3.12.13",
+  "max_output_tokens": 256,
+  "synthetic_fixture_only": true,
+  "new_session_each_turn": true,
+  "session_files": 3,
+  "recall_not_persisted": true,
+  "cases": [
+    {
+      "mode": "off",
+      "expected": "UNKNOWN",
+      "answer": "UNKNOWN",
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "mode": "on",
+      "expected": "LANTERN-7392",
+      "answer": "LANTERN-7392",
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "mode": "off",
+      "expected": "UNKNOWN",
+      "answer": "UNKNOWN",
+      "exit_code": 0,
+      "passed": true
+    }
+  ],
+  "passed": true
+}

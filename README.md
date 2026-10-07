@@ -61,7 +61,9 @@ aelix-memory reindex
 ```
 
 The extension never downloads models. Model-directory fingerprints keep different
-embedding spaces separate. Without a model, lexical/CJK search works on its own.
+embedding spaces separate. Keep the supplied model directory immutable for a session.
+Without a model, lexical/CJK search works on its own.
+Run `reindex` after saving or approving memories to include them in semantic search.
 Semantic failures produce a warning and fall back to lexical recall. We have not
 established benchmark superiority; see [research](docs/research.md),
 [contract](docs/decisions/0001-memory-contract.md) and
@@ -69,6 +71,8 @@ established benchmark superiority; see [research](docs/research.md),
 
 The alpha does not harvest transcripts or tool output. Agent proposals retain
 their inferred origin after approval; source pointers are declared, not verified.
+Memory tools retain the host's permission prompts and plan-mode restrictions,
+and the extension respects `--no-tools` and explicit tool selection.
 Retrieved memory is escaped historical evidence, and current instructions and
 tool permissions still govern the agent. Secret detection is best effort.
 Stored memory is plaintext protected by local file permissions, not encryption.
@@ -78,4 +82,5 @@ and its search indices, not backups, exports, host transcripts or SSD remnants.
 
 Develop with `uv sync --python 3.12`, `uv run pytest`, `uv run ruff check .`,
 `uv run ruff format --check .`, `uv run pyright` and `uv build`. Host integration
-is checked separately against a pinned Aelix checkout.
+and type checking require host packages; install them with `uv sync --extra host`.
+Release CI checks integration against a pinned Aelix checkout.

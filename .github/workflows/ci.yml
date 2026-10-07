@@ -1,0 +1,48 @@
+name: Memory quality and host integration
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ['3.11', '3.12', '3.13']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.23'
+          python-version: ${{ matrix.python }}
+      - run: uv sync --locked
+      - run: uv run pytest -m 'not host' -q
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run python tools/evaluate_retrieval.py
+      - run: uv build
+
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: handochan/aelix-ai
+          ref: 61f03b6718211c5e3ec81617374ff736881dd999
+          path: .host-src
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.23'
+          python-version: '3.12'
+      - run: uv sync --locked
+      - run: uv pip install .host-src/packages/aelix-ai .host-src/packages/aelix-agent-core .host-src/packages/aelix-coding-agent
+      - run: uv run pyright
+      - run: uv run pytest -m host -q
+      - run: uv build
+      - run: uv pip install --reinstall --no-deps dist/*.whl
+      - run: uv run --no-sync aelix extension verify aelix-memory

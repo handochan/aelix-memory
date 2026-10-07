@@ -1,0 +1,174 @@
+{
+  "kind": "hand-labelled retrieval smoke; not answer quality or public benchmark",
+  "python": "3.12.13",
+  "sqlite": "3.53.1",
+  "channels": [
+    "lexical",
+    "cjk"
+  ],
+  "records": 11,
+  "queries": 26,
+  "positive_top1": 1.0,
+  "positive_recall5": 1.0,
+  "negative_abstention": 1.0,
+  "p50_ms": 0.19037502352148294,
+  "p95_ms": 0.31045801006257534,
+  "cases": [
+    {
+      "query": "pytest regression suite",
+      "expected": "runner",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "uv runner",
+      "expected": "runner",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "testing",
+      "expected": "runner",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "Korean explanations",
+      "expected": "language",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "answer language",
+      "expected": "language",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "SQLite transactional",
+      "expected": "database",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "project storage SQLite",
+      "expected": "database",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "pending_session_writes",
+      "expected": "queue",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "FIFO dispatcher failure",
+      "expected": "queue",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "older newer queue",
+      "expected": "queue",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "메모리 승인",
+      "expected": "korean",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "사용자승인",
+      "expected": "korean",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "프로젝트별격리",
+      "expected": "korean",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "WindowDefinition",
+      "expected": "window",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "wafer window instances",
+      "expected": "window",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "Unicode paths",
+      "expected": "unicode",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "파일경로",
+      "expected": "unicode",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "plan permission gate",
+      "expected": "permissions",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "raw transcript harvesting",
+      "expected": "privacy",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "memory privacy OFF",
+      "expected": "privacy",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "portable JSON export",
+      "expected": "export",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "existing export file",
+      "expected": "export",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "PostgreSQL execution ledger",
+      "expected": "distractor",
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "quantum volcanoes",
+      "expected": null,
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "mars crocodiles",
+      "expected": null,
+      "top1": true,
+      "recall5": true
+    },
+    {
+      "query": "neutrino spectroscopy",
+      "expected": null,
+      "top1": true,
+      "recall5": true
+    }
+  ]
+}

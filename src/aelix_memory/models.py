@@ -88,13 +88,24 @@ class Draft:
             kind=self.kind,
             key=clean_text(self.key, "key", 200) if self.key is not None else None,
             tags=tuple(dict.fromkeys(clean_text(t, "tag", 80) for t in self.tags)),
-            related_ids=tuple(dict.fromkeys(clean_text(t, "related ID", 32) for t in self.related_ids)),
+            related_ids=tuple(
+                dict.fromkeys(clean_text(t, "related ID", 32) for t in self.related_ids)
+            ),
             expires_at=timestamp(self.expires_at) if self.expires_at else None,
         )
 
     @property
     def fingerprint(self) -> str:
-        data = [self.title, self.content, self.kind, self.key, sorted(self.tags), self.expires_at]
+        data = [
+            self.title,
+            self.content,
+            self.kind,
+            self.key,
+            sorted(self.tags),
+            self.source_ref,
+            sorted(self.related_ids),
+            self.expires_at,
+        ]
         return hashlib.sha256(json.dumps(data, ensure_ascii=False).encode()).hexdigest()
 
 
