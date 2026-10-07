@@ -1,0 +1,30 @@
+[plugin]
+id = "aelix-memory"
+name = "Aelix Memory"
+version = "0.1.0-alpha.1"
+description = "Opt-in local memory with provenance, review, temporal updates and hybrid retrieval"
+authors = ["Aelix Contributors"]
+repository = "https://github.com/handochan/aelix-memory"
+license = "Apache-2.0"
+
+[plugin.api]
+level = 1
+min_level = 1
+
+[plugin.entry]
+python = "aelix_memory:setup"
+
+[capabilities]
+fs_write = true
+fs_read_user = true
+shell_exec = false
+net = false
+ui_tui_trusted = false
+
+[activation]
+on_startup_finished = true
+on_command = ["memory"]
+
+[[contributes.commands]]
+id = "memory"
+description = "Choose memory mode, inspect, approve, update, export or forget memories"

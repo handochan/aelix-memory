@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aelix-memory"
+version = "0.1.0a1"
+description = "Opt-in, local, provenance-aware persistent memory for Aelix"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{name = "Aelix Contributors"}]
+dependencies = []
+
+[project.optional-dependencies]
+host = ["aelix-coding-agent>=0.1.0b2,<0.2"]
+semantic = ["sentence-transformers>=3,<6"]
+
+[project.urls]
+Repository = "https://github.com/handochan/aelix-memory"
+Issues = "https://github.com/handochan/aelix-memory/issues"
+
+[project.scripts]
+aelix-memory = "aelix_memory.cli:main"
+
+[project.entry-points."aelix.extensions"]
+aelix-memory = "aelix_memory:setup"
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "pytest-asyncio>=0.24,<2", "ruff>=0.12,<1", "pyright>=1.1.400", "hatchling>=1.27,<2"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aelix_memory"]
+exclude = ["__pycache__", "*.pyc", ".env", ".omc", ".claude", ".devstate"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "tools", "docs", "README.md", "LICENSE", "pyproject.toml", "uv.lock"]
+exclude = ["__pycache__", "*.pyc", ".env", ".omc", ".claude", ".devstate"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = ["host: integration with the real Aelix host", "semantic: requires a provisioned local embedding model"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.pyright]
+include = ["src"]
+typeCheckingMode = "basic"
+pythonVersion = "3.11"
