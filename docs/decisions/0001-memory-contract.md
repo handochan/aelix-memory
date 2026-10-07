@@ -1,6 +1,6 @@
 # ADR-0001: Opt-in, scoped, evidence-preserving memory
 
-Status: Accepted (alpha implementation)
+Status: Superseded by [ADR-0002](0002-natural-automatic-memory.md)
 Date: 2026-10-08
 
 ## Decision

@@ -65,6 +65,11 @@ def clean_text(value: str, name: str, max_bytes: int) -> str:
     return value
 
 
+def contains_secret(value: str) -> bool:
+    """A conservative signal for excluding an exchange before automatic extraction."""
+    return bool(_SECRET.search(value))
+
+
 @dataclass(frozen=True)
 class Draft:
     title: str
@@ -88,13 +93,24 @@ class Draft:
             kind=self.kind,
             key=clean_text(self.key, "key", 200) if self.key is not None else None,
             tags=tuple(dict.fromkeys(clean_text(t, "tag", 80) for t in self.tags)),
-            related_ids=tuple(dict.fromkeys(clean_text(t, "related ID", 32) for t in self.related_ids)),
+            related_ids=tuple(
+                dict.fromkeys(clean_text(t, "related ID", 32) for t in self.related_ids)
+            ),
             expires_at=timestamp(self.expires_at) if self.expires_at else None,
         )
 
     @property
     def fingerprint(self) -> str:
-        data = [self.title, self.content, self.kind, self.key, sorted(self.tags), self.expires_at]
+        data = [
+            self.title,
+            self.content,
+            self.kind,
+            self.key,
+            sorted(self.tags),
+            self.source_ref,
+            sorted(self.related_ids),
+            self.expires_at,
+        ]
         return hashlib.sha256(json.dumps(data, ensure_ascii=False).encode()).hexdigest()
 
 
@@ -119,13 +135,16 @@ class Memory:
     valid_until: str | None
     expires_at: str | None
     supersedes: str | None
+    evidence_quote: str | None = None
+    source_role: Literal["user", "assistant"] | None = None
+    source_verification: Literal["declared", "matched_quote"] = "declared"
 
     @property
     def citation(self) -> str:
         return f"memory://{self.scope}/{self.id}"
 
     def to_dict(self) -> dict:
-        return {**asdict(self), "citation": self.citation, "source_verification": "declared"}
+        return {**asdict(self), "citation": self.citation}
 
 
 @dataclass(frozen=True)

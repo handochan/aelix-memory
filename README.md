@@ -1,81 +1,111 @@
-# Aelix Memory (alpha)
+# Aelix Memory
 
-Opt-in persistent memory for Aelix. Memories stay on your machine, separate from
-session history. Every project starts **OFF**. Installing or loading the extension
-creates no memory files. No API key, database service or background worker is needed.
+Natural persistent memory for Aelix. Enable it once; important preferences,
+project decisions and useful lessons are extracted, stored and recalled automatically.
+
+Every project starts OFF. Installing/loading the extension creates no memory files.
+Inside Aelix, choose whether to use memory:
+
+```text
+/memory on
+/memory off
+```
+
+After enabling, just talk normally:
+
+```text
+You:   In this project I always use pnpm, never npm.
+Aelix: Understood.
+
+...a new session later...
+
+You:   Which package manager should we use?
+Aelix: pnpm.
+```
+
+You do not have to call a memory tool, approve individual records, inspect a queue,
+or maintain an index. Corrections update the current property automatically;
+previous versions remain available as history. A configured local embedding model
+is indexed automatically.
+
+Install into the same Python environment as Aelix:
 
 ```bash
-uv pip install .                 # into the same environment as Aelix
+uv pip install .
 aelix extension verify aelix-memory
 aelix
 ```
 
-Inside Aelix:
+Automatic extraction runs quietly after a completed exchange, using the same
+model, endpoint and credentials as your current Aelix session. It makes a bounded
+auxiliary model request; it needs no separate API key, worker or service. The main
+reply is not held for learning. Pending work is finished before the next turn and
+at session shutdown so a fresh session can recall what was learned.
+
+Only durable information is selected. Stored content is an exact source quote with
+its source role and session/turn receipt, not an unconstrained generated summary.
+Thinking and raw tool output are excluded. Explicit requests not to remember an
+exchange and detected credentials suppress extraction. Source matching verifies a
+passage, not the truth of its claim. Current instructions and fresh evidence take
+precedence over memory.
+
+Inspection and management are optional:
 
 ```text
 /memory status
-/memory on
-/memory remember --kind preference --key answer-language "Prefer Korean explanations."
-/memory search "answer language"
-/memory pending
-/memory approve <id>
+/memory list
+/memory show <id>
+/memory history <id>
+/memory forget <id>
+/memory export --output memories.json
 /memory read
-/memory off
 ```
 
-`on` enables recall and agent proposals. `read` enables recall without proposals.
-`off` blocks agent memory access and further recall injection. Only you can change
-these modes or approve a proposal. Saving a proposal does not make it searchable.
-User management (`list`, `show`, `history`, `export`, `forget`) works even while
-memory is off, so you can inspect and delete retained records.
+READ recalls without learning; OFF stops learning, recall and further injection.
+OFF also revokes pending jobs, including when you later turn memory on again.
+A forgotten record or newer revision cannot be overwritten by an old learning job.
+Existing pending records from the previous implementation remain pending and may
+be approved/discarded with the legacy management commands; they are not part of
+the normal automatic workflow.
 
-The standalone CLI has the same commands, for example:
+The model-free SDK and CLI support the same optional management, for example:
 
 ```bash
 aelix-memory --project /path/to/repo on
-aelix-memory --project /path/to/repo remember --title "Test runner" --key test-runner "Use uv run pytest."
-aelix-memory --project /path/to/repo search "test runner"
+aelix-memory --project /path/to/repo list
 aelix-memory --project /path/to/repo export --output memories.json
-aelix-memory --project /path/to/repo forget <id>
 ```
 
-Use `aelix-memory --help` or `/memory help` for the full command list. Keyed
-changes use `update <id> <text>`; a stale revision is rejected. `history <id>`
-shows the retained versions, and `search --as-of <ISO timestamp> <query>` answers
-historical queries. `forget <id>` deletes the whole revision family, including
-pending replacements, so an older value cannot reappear. Export files are created
-exclusively with private permissions; existing files are not overwritten.
+CLI pipe output and exports use UTF-8. Export does not overwrite an existing file.
+Storage defaults to `~/.aelix/memory/memory.sqlite3`; `AELIX_MEMORY_HOME` selects
+another user-owned directory. Each resolved nearest Git root (otherwise cwd) is
+isolated; worktrees stay separate. Repository files cannot enable memory.
 
-Storage defaults to `~/.aelix/memory/memory.sqlite3`. `AELIX_MEMORY_HOME` selects a
-different user-owned directory. Project identity uses the resolved nearest Git
-root (otherwise cwd), and different worktree roots stay separate. Consent is not
-read from repository files. There is no global sharing in this version.
-
-Search combines SQLite FTS5 lexical ranking and CJK character n-grams. Optional
-offline semantic search uses a model directory you have already provisioned:
+Default retrieval is offline SQLite lexical/CJK search. Optional local semantic
+retrieval uses an already provisioned model:
 
 ```bash
 uv pip install '.[semantic]'
-export AELIX_MEMORY_EMBEDDING_MODEL=/absolute/path/to/local/sentence-transformer
-aelix-memory reindex
+export AELIX_MEMORY_EMBEDDING_MODEL=/absolute/path/to/local/model
 ```
 
-The extension never downloads models. Model-directory fingerprints keep different
-embedding spaces separate. Without a model, lexical/CJK search works on its own.
-Semantic failures produce a warning and fall back to lexical recall. We have not
-established benchmark superiority; see [research](docs/research.md),
-[contract](docs/decisions/0001-memory-contract.md) and
-[verification](docs/verification/README.md) for the measured scope and release gates.
+The extension automatically indexes new records and fills missing vectors in bounded
+batches. No model is downloaded at runtime. Keep model files immutable for a session.
+Manual `reindex` remains an optional repair command, not routine maintenance.
 
-The alpha does not harvest transcripts or tool output. Agent proposals retain
-their inferred origin after approval; source pointers are declared, not verified.
-Retrieved memory is escaped historical evidence, and current instructions and
-tool permissions still govern the agent. Secret detection is best effort.
-Stored memory is plaintext protected by local file permissions, not encryption.
-OFF cannot erase a request already sent or remembered text in an existing session;
-use a new session when you need a clean conversation. Deletion covers this store
-and its search indices, not backups, exports, host transcripts or SSD remnants.
+Memory uses plaintext local storage with POSIX file permissions. OFF cannot retract
+requests already sent or facts already present in a host conversation. Deletion
+covers this memory store and indices, not exports, backups, host transcripts or SSD
+remnants. The host still governs optional memory tool calls through its permission
+gate; no tool approval is involved in automatic learning.
+
+[Research](docs/research.md), [current contract](docs/decisions/0002-natural-automatic-memory.md),
+[verification](docs/verification/README.md), and [remaining evaluation work](docs/roadmap.md)
+record the tested scope. A public benchmark comparison remains necessary for a
+claim of superior memory quality.
 
 Develop with `uv sync --python 3.12`, `uv run pytest`, `uv run ruff check .`,
-`uv run ruff format --check .`, `uv run pyright` and `uv build`. Host integration
-is checked separately against a pinned Aelix checkout.
+`uv run ruff format --check .`, `uv run pyright` and `uv build`. Type/host checks
+require host packages; release CI installs a pinned Aelix checkout. Core storage and
+CLI remain standard-library-only. The repository/package identity is `aelix-memory`,
+and the product name is Aelix Memory.

@@ -5,9 +5,11 @@ host imports live only in the extension adapter. Read `docs/decisions/0001-memor
 before changing consent, persistence, provenance, retrieval, or deletion.
 
 Memory is OFF until the user enables the canonical project in user-owned storage.
-Agent proposals never become recallable without a user approval. Read paths may not
-create files or change storage. Check consent again inside every agent write transaction.
-Keep scope filters on every query, including retrieval and ID resolution.
+ON authorizes automatic extraction and storage without per-memory approval. Read paths
+may not create files or change storage. Recheck the consent generation and cancellation
+inside every automatic write transaction; an OFF/ON cycle revokes earlier jobs.
+Keep scope filters on every query, including retrieval and ID resolution. Read
+`docs/decisions/0002-natural-automatic-memory.md`, which supersedes the approval policy.
 
 Run `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, and
 `uv run pyright`. Host integration is a separate gate: build and install a real

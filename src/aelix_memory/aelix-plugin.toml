@@ -1,8 +1,8 @@
 [plugin]
 id = "aelix-memory"
 name = "Aelix Memory"
-version = "0.1.0-alpha.1"
-description = "Opt-in local memory with provenance, review, temporal updates and hybrid retrieval"
+version = "0.1.0"
+description = "Natural automatic project memory: enable once, learn and recall across sessions"
 authors = ["Aelix Contributors"]
 repository = "https://github.com/handochan/aelix-memory"
 license = "Apache-2.0"
@@ -18,7 +18,7 @@ python = "aelix_memory:setup"
 fs_write = true
 fs_read_user = true
 shell_exec = false
-net = false
+net = true
 ui_tui_trusted = false
 
 [activation]
@@ -27,4 +27,4 @@ on_command = ["memory"]
 
 [[contributes.commands]]
 id = "memory"
-description = "Choose memory mode, inspect, approve, update, export or forget memories"
+description = "Turn automatic memory on/off and optionally inspect, export or forget memories"
