@@ -1,0 +1,94 @@
+{
+  "at": "2026-10-08T01:11:35.868120+00:00",
+  "provider": "openrouter",
+  "model": "openai/gpt-5.4-mini",
+  "python": "3.12.13",
+  "synthetic_data_only": true,
+  "manual_memory_writes": 0,
+  "approvals": 0,
+  "tools_disabled": true,
+  "new_session_each_turn": true,
+  "single_global_opt_in": true,
+  "knowledge_isolated": true,
+  "other_project_off_disables_first": true,
+  "off_created_store": false,
+  "automatically_extracted": true,
+  "correction_keeps_history": true,
+  "pending_records": 0,
+  "recall_not_persisted": true,
+  "cases": [
+    {
+      "case": "off_does_not_learn",
+      "project": "first",
+      "answer": "ACK",
+      "expected": "ACK",
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "case": "automatic_learning",
+      "project": "first",
+      "answer": "ACK",
+      "expected": "ACK",
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "case": "other_project_has_no_shared_facts",
+      "project": "second",
+      "answer": "UNKNOWN",
+      "expected": "UNKNOWN",
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "case": "other_project_learns_without_another_opt_in",
+      "project": "second",
+      "answer": "ACK",
+      "expected": "ACK",
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "case": "other_project_recalls_its_own_facts",
+      "project": "second",
+      "answer": "yarn",
+      "expected": "yarn",
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "case": "fresh_session_recall",
+      "project": "first",
+      "answer": "pnpm",
+      "expected": "pnpm",
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "case": "automatic_correction",
+      "project": "first",
+      "answer": "ACK",
+      "expected": "ACK",
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "case": "fresh_session_corrected_recall",
+      "project": "first",
+      "answer": "npm",
+      "expected": "npm",
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "case": "off_suppresses_recall",
+      "project": "first",
+      "answer": "UNKNOWN",
+      "expected": "UNKNOWN",
+      "exit_code": 0,
+      "passed": true
+    }
+  ],
+  "passed": true
+}

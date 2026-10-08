@@ -1,8 +1,8 @@
 [plugin]
 id = "aelix-memory"
 name = "Aelix Memory"
-version = "0.1.0"
-description = "Natural automatic project memory: enable once, learn and recall across sessions"
+version = "0.2.0"
+description = "Enable memory globally once; learn and recall project knowledge automatically"
 authors = ["Aelix Contributors"]
 repository = "https://github.com/handochan/aelix-memory"
 license = "Apache-2.0"

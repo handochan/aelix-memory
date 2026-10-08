@@ -3,13 +3,18 @@
 Natural persistent memory for Aelix. Enable it once; important preferences,
 project decisions and useful lessons are extracted, stored and recalled automatically.
 
-Every project starts OFF. Installing/loading the extension creates no memory files.
-Inside Aelix, choose whether to use memory:
+Memory starts OFF globally. Installing/loading the extension or opening settings creates
+no memory files. Enable **Memory** in Aelix `/settings` once; that choice persists across
+projects, sessions and process restarts. You can also use the same global setting:
 
 ```text
 /memory on
 /memory off
 ```
+
+The settings row requires a host with `ExtensionAPI.register_setting` (Aelix host
+[Issue #403](https://github.com/handochan/aelix-ai/issues/403)). On older hosts,
+`/memory on` and `/memory off` provide the same global choice.
 
 After enabling, just talk normally:
 
@@ -63,6 +68,7 @@ Inspection and management are optional:
 
 READ recalls without learning; OFF stops learning, recall and further injection.
 OFF also revokes pending jobs, including when you later turn memory on again.
+A change in any project applies everywhere and revokes older jobs in other processes.
 A forgotten record or newer revision cannot be overwritten by an old learning job.
 Existing pending records from the previous implementation remain pending and may
 be approved/discarded with the legacy management commands; they are not part of
@@ -71,7 +77,7 @@ the normal automatic workflow.
 The model-free SDK and CLI support the same optional management, for example:
 
 ```bash
-aelix-memory --project /path/to/repo on
+aelix-memory on
 aelix-memory --project /path/to/repo list
 aelix-memory --project /path/to/repo export --output memories.json
 ```
@@ -80,6 +86,10 @@ CLI pipe output and exports use UTF-8. Export does not overwrite an existing fil
 Storage defaults to `~/.aelix/memory/memory.sqlite3`; `AELIX_MEMORY_HOME` selects
 another user-owned directory. Each resolved nearest Git root (otherwise cwd) is
 isolated; worktrees stay separate. Repository files cannot enable memory.
+Global ON/OFF controls usage, while facts, searches, exports and IDs remain project
+scoped. Existing schema v1/v2 stores inherit the most recent explicit user mode choice
+as the global mode. Read access never migrates or mutates the database; the next
+authorized write upgrades it transactionally and preserves existing records.
 
 Default retrieval is offline SQLite lexical/CJK search. Optional local semantic
 retrieval uses an already provisioned model:
@@ -99,7 +109,7 @@ covers this memory store and indices, not exports, backups, host transcripts or 
 remnants. The host still governs optional memory tool calls through its permission
 gate; no tool approval is involved in automatic learning.
 
-[Research](docs/research.md), [current contract](docs/decisions/0002-natural-automatic-memory.md),
+[Research](docs/research.md), [current contract](docs/decisions/0003-global-usage-settings.md),
 [verification](docs/verification/README.md), and [remaining evaluation work](docs/roadmap.md)
 record the tested scope. A public benchmark comparison remains necessary for a
 claim of superior memory quality.

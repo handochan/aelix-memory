@@ -33,6 +33,9 @@ def verify(provider: str, model: str) -> dict:
         project = root / "project"
         project.mkdir()
         scope = Scope.for_project(project)
+        other_project = root / "other-project"
+        other_project.mkdir()
+        other_scope = Scope.for_project(other_project)
         store = Store(root / "memory")
         helper = root / "cap.py"
         helper.write_text(CAP, encoding="utf-8")
@@ -40,7 +43,7 @@ def verify(provider: str, model: str) -> dict:
         env = {**os.environ, "AELIX_MEMORY_HOME": str(store.home)}
         env.pop("AELIX_MEMORY_EMBEDDING_MODEL", None)
 
-        def turn(label: str, prompt: str, expected: str) -> None:
+        def turn(label: str, prompt: str, expected: str, *, cwd: Path = project) -> None:
             completed = subprocess.run(
                 [
                     str(cli),
@@ -62,7 +65,7 @@ def verify(provider: str, model: str) -> dict:
                     "-p",
                     prompt,
                 ],
-                cwd=project,
+                cwd=cwd,
                 env=env,
                 text=True,
                 encoding="utf-8",
@@ -73,6 +76,7 @@ def verify(provider: str, model: str) -> dict:
             cases.append(
                 {
                     "case": label,
+                    "project": "first" if cwd == project else "second",
                     "answer": answer,
                     "expected": expected,
                     "exit_code": completed.returncode,
@@ -95,6 +99,18 @@ def verify(provider: str, model: str) -> dict:
         learned = store.search(scope, "pnpm").hits
         captured = bool(learned and learned[0].memory.source_verification == "matched_quote")
         question = "Which package manager do I use in this project? Reply only with its name from memory, or UNKNOWN if no memory evidence is provided."
+        globally_enabled = store.mode(other_scope) == "on"
+        turn("other_project_has_no_shared_facts", question, "UNKNOWN", cwd=other_project)
+        turn(
+            "other_project_learns_without_another_opt_in",
+            "In this project I always use yarn as the package manager. Respond only ACK.",
+            "ACK",
+            cwd=other_project,
+        )
+        turn("other_project_recalls_its_own_facts", question, "yarn", cwd=other_project)
+        isolated = (
+            not store.search(other_scope, "pnpm").hits and not store.search(scope, "yarn").hits
+        )
         turn("fresh_session_recall", question, "pnpm")
         turn(
             "automatic_correction",
@@ -104,7 +120,7 @@ def verify(provider: str, model: str) -> dict:
         turn("fresh_session_corrected_recall", question, "npm")
         history = store.list(scope, status="all")
         updated = bool(any(m.status == "superseded" for m in history))
-        store.set_mode(scope, "off")
+        store.set_mode(other_scope, "off")
         turn("off_suppresses_recall", question, "UNKNOWN")
         sessions = [p.read_text(encoding="utf-8") for p in (root / "sessions").rglob("*.jsonl")]
         ephemeral = all("<aelix_memory" not in text for text in sessions)
@@ -118,6 +134,9 @@ def verify(provider: str, model: str) -> dict:
             "approvals": 0,
             "tools_disabled": True,
             "new_session_each_turn": True,
+            "single_global_opt_in": globally_enabled,
+            "knowledge_isolated": isolated,
+            "other_project_off_disables_first": store.mode(scope) == "off",
             "off_created_store": off_created_store,
             "automatically_extracted": captured,
             "correction_keeps_history": updated,
@@ -127,6 +146,8 @@ def verify(provider: str, model: str) -> dict:
             "passed": all(c["passed"] for c in cases)
             and captured
             and updated
+            and globally_enabled
+            and isolated
             and ephemeral
             and not off_created_store,
         }

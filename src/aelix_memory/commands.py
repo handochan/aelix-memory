@@ -21,7 +21,7 @@ class Parser(argparse.ArgumentParser):
 def parser() -> Parser:
     command = Parser(
         prog="aelix-memory",
-        description="Turn natural project memory on/off; inspection and export are optional.",
+        description="Turn memory on/off globally; project inspection and export are optional.",
     )
     command.add_argument("--project", default=os.getcwd(), help="Project directory (default: cwd)")
     operations = command.add_subparsers(dest="command")
@@ -62,12 +62,14 @@ def run(store: Store, scope: Scope, args: argparse.Namespace) -> str:
         return parser().format_help()
     if name in {"on", "read", "off"}:
         store.set_mode(scope, cast(Mode, name))
-        return f"Memory {name.upper()} for {scope.root}."
+        return f"Memory {name.upper()} globally."
     if name == "status":
         mode = store.mode(scope)
         return _json(
             {
                 "mode": mode,
+                "setting_scope": "global",
+                "knowledge_scope": "project",
                 "project": str(scope.root),
                 "scope": scope.id,
                 "store_exists": store.path.exists(),

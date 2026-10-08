@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aelix-memory"
-version = "0.1.0"
+version = "0.2.0"
 description = "Natural automatic memory for Aelix: enable once, learn and recall across sessions"
 readme = "README.md"
 requires-python = ">=3.11"

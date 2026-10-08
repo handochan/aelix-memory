@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from aelix_coding_agent.extensions.api import ExtensionAPI
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 def setup(aelix: ExtensionAPI) -> None:
