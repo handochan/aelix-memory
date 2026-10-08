@@ -1,0 +1,81 @@
+{
+  "passed": true,
+  "global_choice": "off",
+  "screens": [
+    {
+      "project": 0,
+      "screen": "before",
+      "lines": [
+        "── Settings — select to change (Esc to close) ────────────────────────────────",
+        "▸ Memory                  off",
+        "  (1/1)  ·  Filter: Memory",
+        "Use memory globally across projects and sessions. On learns and recalls automatically; off stops both.",
+        "──────────────────────────────────────────────────────────────────────────────",
+        "↑/↓ move · type to filter · Enter select · Esc cancel",
+        "● default  ·  📂 <synthetic-root>/project-0"
+      ]
+    },
+    {
+      "project": 0,
+      "screen": "after",
+      "lines": [
+        "── Settings — select to change (Esc to close) ────────────────────────────────",
+        "  ⋮",
+        "  Skill commands          on",
+        "  Double-escape action    tree",
+        "  Tree filter mode        default",
+        "  Auto-resize images      on",
+        "  Block images            off",
+        "  Terminal progress       off",
+        "  Clear on shrink         off",
+        "▸ Memory                  on",
+        "  (24/24)",
+        "Use memory globally across projects and sessions. On learns and recalls automatically; off stops both.",
+        "──────────────────────────────────────────────────────────────────────────────",
+        "↑/↓ move · type to filter · Enter select · Esc cancel",
+        "● default  ·  📂 <synthetic-root>/project-0"
+      ]
+    },
+    {
+      "project": 1,
+      "screen": "before",
+      "lines": [
+        "── Settings — select to change (Esc to close) ────────────────────────────────",
+        "▸ Memory                  on",
+        "  (1/1)  ·  Filter: Memory",
+        "Use memory globally across projects and sessions. On learns and recalls automatically; off stops both.",
+        "──────────────────────────────────────────────────────────────────────────────",
+        "↑/↓ move · type to filter · Enter select · Esc cancel",
+        "● default  ·  📂 <synthetic-root>/project-1"
+      ]
+    },
+    {
+      "project": 1,
+      "screen": "after",
+      "lines": [
+        "── Settings — select to change (Esc to close) ────────────────────────────────",
+        "  ⋮",
+        "  Skill commands          on",
+        "  Double-escape action    tree",
+        "  Tree filter mode        default",
+        "  Auto-resize images      on",
+        "  Block images            off",
+        "  Terminal progress       off",
+        "  Clear on shrink         off",
+        "▸ Memory                  off",
+        "  (24/24)",
+        "Use memory globally across projects and sessions. On learns and recalls automatically; off stops both.",
+        "──────────────────────────────────────────────────────────────────────────────",
+        "↑/↓ move · type to filter · Enter select · Esc cancel",
+        "● default  ·  📂 <synthetic-root>/project-1"
+      ]
+    }
+  ],
+  "different_project_and_process": true,
+  "default_and_menu_read_created_no_memory": true,
+  "memory_version": "0.2.0",
+  "host_base_sha": "cd6f7a5c31adf34e5a43c254026aa81d96d60339",
+  "host_patch": "feat/extension-settings",
+  "command": "uv run --project <host> --no-sync aelix --provider openrouter --model openai/gpt-5.4-mini --no-tools --no-agents --no-skills --no-context-files --no-approve --session-dir <synthetic-root>/sessions",
+  "model_requests": 0
+}

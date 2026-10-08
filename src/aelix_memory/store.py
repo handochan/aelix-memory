@@ -34,6 +34,7 @@ from .scope import Scope
 
 _SCHEMA = (
     "CREATE TABLE scopes (id TEXT PRIMARY KEY, root TEXT NOT NULL, mode TEXT NOT NULL CHECK(mode IN ('off','read','on')))",
+    "CREATE TABLE configuration (id TEXT PRIMARY KEY CHECK(id='global'), mode TEXT NOT NULL CHECK(mode IN ('off','read','on')))",
     """CREATE TABLE memories (
         id TEXT PRIMARY KEY, scope TEXT NOT NULL REFERENCES scopes(id), family_id TEXT NOT NULL,
         title TEXT NOT NULL, content TEXT NOT NULL, kind TEXT NOT NULL, key TEXT,
@@ -124,16 +125,25 @@ class Store:
                     raise MemoryError("Refusing an unversioned, non-empty memory database.")
                 for statement in _SCHEMA:
                     connection.execute(statement)
-                connection.execute("PRAGMA user_version=2")
+                connection.execute("PRAGMA user_version=3")
             elif version == 1 and write:
                 connection.execute("ALTER TABLE memories ADD COLUMN evidence_quote TEXT")
                 connection.execute("ALTER TABLE memories ADD COLUMN source_role TEXT")
                 connection.execute(
                     "ALTER TABLE memories ADD COLUMN source_verification TEXT NOT NULL DEFAULT 'declared'"
                 )
-                connection.execute("PRAGMA user_version=2")
-            elif version not in {1, 2}:
+            elif version not in {1, 2, 3}:
                 raise MemoryError("Unsupported memory schema; no data was changed.")
+            if write and version in {1, 2}:
+                legacy_mode = self._legacy_mode(connection)
+                connection.execute(
+                    "CREATE TABLE IF NOT EXISTS configuration (id TEXT PRIMARY KEY CHECK(id='global'), mode TEXT NOT NULL CHECK(mode IN ('off','read','on')))"
+                )
+                connection.execute(
+                    "INSERT OR IGNORE INTO configuration(id,mode) VALUES('global',?)",
+                    (legacy_mode,),
+                )
+                connection.execute("PRAGMA user_version=3")
             yield connection
             connection.commit()
         except BaseException:
@@ -143,19 +153,31 @@ class Store:
             connection.close()
 
     @staticmethod
-    def _mode(connection: sqlite3.Connection, scope: Scope) -> Mode:
-        row = connection.execute("SELECT mode FROM scopes WHERE id=?", (scope.id,)).fetchone()
+    def _legacy_mode(connection: sqlite3.Connection) -> Mode:
+        row = connection.execute(
+            "SELECT action FROM audit WHERE action LIKE 'mode:%' ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        mode = row[0].removeprefix("mode:") if row else "off"
+        return cast(Mode, mode) if mode in MODES else "off"
+
+    @staticmethod
+    def _mode(connection: sqlite3.Connection, _scope: Scope | None = None) -> Mode:
+        if connection.execute("PRAGMA user_version").fetchone()[0] < 3:
+            return Store._legacy_mode(connection)
+        row = connection.execute("SELECT mode FROM configuration WHERE id='global'").fetchone()
         return cast(Mode, row[0]) if row else "off"
 
-    def mode(self, scope: Scope) -> Mode:
+    def global_mode(self) -> Mode:
         with self._connect() as connection:
-            return self._mode(connection, scope) if connection else "off"
+            return self._mode(connection) if connection else "off"
+
+    def mode(self, scope: Scope) -> Mode:
+        """Compatibility entry point: usage is global, knowledge remains scoped."""
+        return self.global_mode()
 
     @staticmethod
     def _consent_token(connection: sqlite3.Connection, scope: Scope) -> int:
-        row = connection.execute(
-            "SELECT max(id) FROM audit WHERE scope=? AND action LIKE 'mode:%'", (scope.id,)
-        ).fetchone()
+        row = connection.execute("SELECT max(id) FROM audit WHERE action LIKE 'mode:%'").fetchone()
         return int(row[0] or 0)
 
     def consent_token(self, scope: Scope) -> int:
@@ -191,6 +213,10 @@ class Store:
         )
 
     def set_mode(self, scope: Scope, mode: Mode) -> None:
+        """Compatibility alias; a mode choice now applies to every project."""
+        self.set_global_mode(mode)
+
+    def set_global_mode(self, mode: Mode) -> None:
         if mode not in MODES:
             raise MemoryError("Mode must be off, read or on.")
         # OFF on a missing store is a true no-op; the default already applies.
@@ -198,10 +224,13 @@ class Store:
             if connection is None:
                 return
             connection.execute(
-                "INSERT INTO scopes(id,root,mode) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET mode=excluded.mode",
-                (scope.id, str(scope.root), mode),
+                "INSERT INTO configuration(id,mode) VALUES('global',?) ON CONFLICT(id) DO UPDATE SET mode=excluded.mode",
+                (mode,),
             )
-            self._audit(connection, scope, "mode:" + mode)
+            connection.execute(
+                "INSERT INTO audit(scope,action,memory_id,at) VALUES('global',?,NULL,?)",
+                ("mode:" + mode, now_iso()),
+            )
 
     @staticmethod
     def _resolve(connection: sqlite3.Connection, scope: Scope, mid: str) -> Memory:
@@ -290,6 +319,10 @@ class Store:
             if connection is None:
                 raise ConsentError("Memory is OFF. Enable it explicitly first.")
             self._check_learning(connection, scope, consent_token, cancelled)
+            connection.execute(
+                "INSERT OR IGNORE INTO scopes(id,root,mode) VALUES(?,?,'off')",
+                (scope.id, str(scope.root)),
+            )
             at = now_iso()
             if draft.expires_at and draft.expires_at <= at:
                 raise MemoryError("expires_at must be in the future.")
@@ -519,7 +552,7 @@ class Store:
 
     def export(self, scope: Scope) -> dict:
         return {
-            "schema_version": 2,
+            "schema_version": 3,
             "project": str(scope.root),
             "scope": scope.id,
             "exported_at": now_iso(),

@@ -3,6 +3,8 @@
 Status: Accepted
 Date: 2026-10-08
 Supersedes: ADR-0001 approval/extraction policy
+Superseded by: [ADR-0003](0003-global-usage-settings.md) for consent scope and settings;
+automatic extraction and provenance decisions remain accepted.
 
 ## Decision
 

@@ -1,6 +1,62 @@
 # Aelix Memory verification
 
-## Current automatic memory (0.1.0)
+## Current global usage and settings (0.2.0)
+
+The current consent/settings contract is
+[ADR-0003](../decisions/0003-global-usage-settings.md); automatic extraction remains
+specified by [ADR-0002](../decisions/0002-natural-automatic-memory.md).
+Usage is global; knowledge, search, record IDs and exports stay project-isolated.
+
+- Source suite: **83 passed, 1 skipped** (the optional provisioned semantic model).
+  Lint, formatting, pyright, retrieval smoke and sdist/wheel build pass.
+- Installed 0.2.0 wheel with real host wheels and the provisioned multilingual local
+  model: **84 passed in 6.05 seconds**. Imports resolve to site-packages. Real
+  `aelix extension verify aelix-memory` reports all one endpoint BOUND, exit 0.
+- [settings-tui.json](settings-tui.json): actual `uv run aelix` in a 120×42 PTY,
+  installed memory wheel, temporary agent/memory/session directories. Startup and
+  opening settings create no memory home. `Memory off` → `Memory on` persists; a
+  fresh process in a second project shows ON, then toggles global OFF. Both quit
+  with exit 0. This UI run makes zero model requests.
+- [live-global-memory.json](live-global-memory.json): OpenRouter
+  `openai/gpt-5.4-mini`, nine fresh processes, two synthetic projects, tools disabled,
+  zero manual memory writes and zero approvals. One global opt-in enables learning
+  in both projects. The second project cannot recall the first's facts and recalls
+  its own yarn preference; the first recalls pnpm, then its corrected npm value.
+  OFF from the second project suppresses recall in the first. Recall injection
+  stays absent from durable host session files.
+- Deterministic regressions cover global persistence, actual fresh CLI process
+  OFF/ON revocation of earlier jobs in another project, scope/ID isolation and
+  legacy v2 latest explicit ON/READ/OFF choices. Legacy reads preserve database
+  bytes; the next authorized write upgrades transactionally to schema v3.
+- Host contribution implementation has a separate actual TUI and host regression
+  gate in Aelix `docs/verification/extension-settings-2026-10-08.md`; its first
+  implementation-base run passed 2589 tests, and the run integrated with host main
+  `28dbcaf4a1a9a97e46d88cec4b90c1ddeb486321` passed 2710 tests. Separate review found and verified
+  repairs for async callback invalidation and adversarial final-label collisions.
+
+Core and installed-host jobs are configured for the full Python 3.11/3.12/3.13 ×
+Linux/macOS/Windows matrix, nine combinations each. Host jobs install the TUI extra
+and a pinned checkout exposing the new settings API, so the settings integration
+test runs there. GitHub CI executions are separate from these local macOS results.
+The host API pin is `bab77b22e5a0c90c3481fc6dd5d1bb7932bfa5f4`.
+The optional real semantic and live provider runs are local gates, not claims that
+every provider/model was exercised on every OS/Python combination.
+
+Reproduce model checks using an environment with the built wheels installed and
+normal host credentials:
+
+```bash
+python tools/live_automatic_memory.py --provider openrouter --model openai/gpt-5.4-mini
+AELIX_MEMORY_TEST_MODEL_LOCAL=/path/to/local/model HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 \
+  python -m pytest -q
+```
+
+The original 0.1.0 verification below describes its earlier project opt-in policy.
+The local model remains the explicitly provisioned pinned multilingual MiniLM
+documented below; runtime never downloads it. Public memory-quality benchmarks,
+advanced consolidation and the remaining release tasks remain tracked in Issues.
+
+## Previous automatic memory (0.1.0)
 
 The current contract is [ADR-0002](../decisions/0002-natural-automatic-memory.md).
 ON enables automatic extraction/storage after completed exchanges with no record

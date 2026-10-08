@@ -51,6 +51,45 @@ async def test_extraction_accepts_real_canonical_provider_done_event(enabled, sc
     assert len(notes) == 1 and notes[0].source_role == "user"
 
 
+@pytest.mark.skipif(
+    not hasattr(ExtensionAPI, "register_setting"), reason="Requires the host extension settings API"
+)
+async def test_settings_toggle_and_slash_control_share_one_global_value(
+    store, scope, tmp_path, monkeypatch
+):
+    pytest.importorskip(
+        "prompt_toolkit", reason="Settings UI integration requires the host TUI extra"
+    )
+    pytest.importorskip("rich", reason="Settings UI integration requires the host TUI extra")
+    from aelix_ai.settings import SettingsManager
+    from aelix_coding_agent.tui.extension_settings import (
+        apply_extension_setting,
+        extension_settings_rows,
+    )
+
+    from aelix_memory.scope import Scope
+
+    other_path = tmp_path / "second-project"
+    other_path.mkdir()
+    other = Scope.for_project(other_path)
+    harness, _, _, _, extension = build(scope, store.home, monkeypatch)
+    await harness._emit_session_start("startup")
+    rows = extension_settings_rows(harness.extension_runner.get_settings(), [])
+    assert len(rows) == 1 and rows[0].label == "Memory"
+    assert rows[0].read(SettingsManager.in_memory({})) == "off"
+    assert not store.home.exists()
+    assert (await apply_extension_setting(rows[0])).kind == "ok"
+    assert store.mode(other) == store.mode(scope) == "on"
+    token = store.consent_token(scope)
+    store.set_mode(other, "off")
+    assert rows[0].read(SettingsManager.in_memory({})) == "off"
+    store.set_mode(scope, "on")
+    assert store.consent_token(other) != token
+    assert (await apply_extension_setting(rows[0])).kind == "ok"
+    assert store.global_mode() == "off"
+    await harness._emit_session_shutdown("quit")
+
+
 class FakeExtractor:
     def __init__(self):
         self.calls = 0

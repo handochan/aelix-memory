@@ -81,6 +81,19 @@ class MemoryExtension:
         if desired != active:
             self.api.set_active_tools(desired)
 
+    def memory_enabled(self) -> bool:
+        """Global usage checkbox; READ is also enabled memory, with learning paused."""
+        return self.store.global_mode() != "off"
+
+    async def set_memory_enabled(self, enabled: bool) -> None:
+        if not enabled:
+            self.cancel()
+            self._prompt = ""
+            self._turn_id = None
+        await asyncio.to_thread(self.store.set_global_mode, "on" if enabled else "off")
+        self.sync_tools()
+        self.index_in_background()
+
     def cancel(self) -> None:
         self.learner.cancel()
         if self._index_task and not self._index_task.done():
@@ -251,6 +264,15 @@ class MemoryExtension:
 
 def register(api: ExtensionAPI, *, extractor: Extractor | None = None) -> MemoryExtension:
     extension = MemoryExtension(api, extractor=extractor)
+    register_setting = getattr(api, "register_setting", None)
+    if callable(register_setting):
+        register_setting(
+            "enabled",
+            label="Memory",
+            get_value=extension.memory_enabled,
+            set_value=extension.set_memory_enabled,
+            description="Use memory globally across projects and sessions. On learns and recalls automatically; off stops both.",
+        )
     api.register_command(
         "memory",
         handler=extension.command,

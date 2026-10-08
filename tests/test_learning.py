@@ -184,7 +184,7 @@ def test_v1_read_paths_preserve_bytes_and_first_write_migrates(enabled, scope):
     assert enabled.path.read_bytes() == before
     enabled.add(scope, Draft("New", "New facts.", "new-source"), origin="agent")
     with sqlite3.connect(enabled.path) as conn:
-        assert conn.execute("PRAGMA user_version").fetchone()[0] == 2
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == 3
     assert enabled.get(scope, old.id).content == "Retain old facts."
 
 
