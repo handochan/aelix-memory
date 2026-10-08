@@ -37,8 +37,15 @@ Usage is global; knowledge, search, record IDs and exports stay project-isolated
 Core and installed-host jobs are configured for the full Python 3.11/3.12/3.13 ×
 Linux/macOS/Windows matrix, nine combinations each. Host jobs install the TUI extra
 and a pinned checkout exposing the new settings API, so the settings integration
-test runs there. GitHub CI executions are separate from these local macOS results.
+test runs against the installed memory wheel there. Wheel installation uses explicit
+paths from Python so shell wildcard behavior cannot affect the Windows gate.
+GitHub CI executions are separate from these local macOS results.
 The host API pin is `bab77b22e5a0c90c3481fc6dd5d1bb7932bfa5f4`.
+The first expanded run exposed an `os.getuid` attribute error in Windows pyright
+stubs; the existing runtime `hasattr` guard did not narrow those stubs. A POSIX
+platform guard now expresses the same supported-platform ownership policy. Local
+pyright runs for Windows, Linux and Darwin all pass; remote checks rerun on the
+final commit. This does not extend the existing POSIX mode-bit checks to Windows ACLs.
 The optional real semantic and live provider runs are local gates, not claims that
 every provider/model was exercised on every OS/Python combination.
 

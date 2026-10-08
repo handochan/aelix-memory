@@ -83,7 +83,7 @@ class Store:
                 raise MemoryError("Memory storage paths may not be symlinks.")
             if path.exists():
                 info = path.stat()
-                if hasattr(os, "getuid") and info.st_uid != os.getuid():
+                if os.name == "posix" and info.st_uid != os.getuid():
                     raise MemoryError("Memory storage must belong to the current user.")
                 if os.name == "posix" and stat.S_IMODE(info.st_mode) & 0o077:
                     raise MemoryError(

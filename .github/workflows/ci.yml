@@ -49,7 +49,7 @@ jobs:
       - run: uv sync --locked
       - run: uv pip install .host-src/packages/aelix-ai .host-src/packages/aelix-agent-core ".host-src/packages/aelix-coding-agent[tui]"
       - run: uv run pyright
-      - run: uv run pytest -m host -q
       - run: uv build
-      - run: uv pip install --reinstall --no-deps dist/*.whl
+      - run: uv run python tools/install_ci_wheel.py
       - run: uv run --no-sync aelix extension verify aelix-memory
+      - run: uv run --no-sync pytest -m host -q
