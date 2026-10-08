@@ -77,5 +77,12 @@
   "host_base_sha": "cd6f7a5c31adf34e5a43c254026aa81d96d60339",
   "host_patch": "feat/extension-settings",
   "command": "uv run --project <host> --no-sync aelix --provider openrouter --model openai/gpt-5.4-mini --no-tools --no-agents --no-skills --no-context-files --no-approve --session-dir <synthetic-root>/sessions",
-  "model_requests": 0
+  "model_requests": 0,
+  "final_installed_wheel_validation": {
+    "host_sha": "b5f9e89af47f56e6e144a6759db68042d7c71bc0",
+    "normal_fresh_process_and_project_on_off": true,
+    "external_cli_off_while_on_row_open_preserves_off_intent": true,
+    "model_requests": 0,
+    "source": "Actual 120x42 CPR-capable PTY with installed final host/memory wheels; separate aelix-memory --project <third-project> off process while the second project displayed ON."
+  }
 }

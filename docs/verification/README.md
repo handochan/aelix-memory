@@ -40,7 +40,12 @@ and a pinned checkout exposing the new settings API, so the settings integration
 test runs against the installed memory wheel there. Wheel installation uses explicit
 paths from Python so shell wildcard behavior cannot affect the Windows gate.
 GitHub CI executions are separate from these local macOS results.
-The host API pin is `bab77b22e5a0c90c3481fc6dd5d1bb7932bfa5f4`.
+The final host API/UI pin is `b5f9e89af47f56e6e144a6759db68042d7c71bc0`.
+Its actual menu preserves displayed intent if another process changes the global
+value while settings are open; selecting an ON row for OFF cannot turn memory back
+ON because the other process already switched OFF. Real-modal regressions failed
+in both directions before repair and pass afterward. A final installed-wheel PTY
+run, including external CLI OFF while the ON row stayed visible, also passes.
 The first expanded run exposed an `os.getuid` attribute error in Windows pyright
 stubs; the existing runtime `hasattr` guard did not narrow those stubs. A POSIX
 platform guard now expresses the same supported-platform ownership policy. Local
