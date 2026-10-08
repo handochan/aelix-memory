@@ -40,7 +40,13 @@ and a pinned checkout exposing the new settings API, so the settings integration
 test runs against the installed memory wheel there. Wheel installation uses explicit
 paths from Python so shell wildcard behavior cannot affect the Windows gate.
 GitHub CI executions are separate from these local macOS results.
-The final host API/UI pin is `b5f9e89af47f56e6e144a6759db68042d7c71bc0`.
+The merged host API/UI pin is `dfb4ddccd18af937bc46a423babf9e46a3a0e63f`
+([host PR #404](https://github.com/handochan/aelix-ai/pull/404)). The host change
+was rebased onto `8f7d98aa418ada49b18ee29834f4770675db15c0`; 386 focused tests
+passed and independent review confirmed unchanged task behavior and retained
+installer safeguards. All 12 host CI checks passed before merge; a Windows Bash
+load-test timeout passed unchanged on rerun. Memory core/installed-host CI is
+rerun against the merged commit across all nine OS/Python combinations.
 Its actual menu preserves displayed intent if another process changes the global
 value while settings are open; selecting an ON row for OFF cannot turn memory back
 ON because the other process already switched OFF. Real-modal regressions failed

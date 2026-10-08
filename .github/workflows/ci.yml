@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: handochan/aelix-ai
-          ref: b5f9e89af47f56e6e144a6759db68042d7c71bc0
+          ref: dfb4ddccd18af937bc46a423babf9e46a3a0e63f
           path: .host-src
       - uses: astral-sh/setup-uv@v6
         with:
