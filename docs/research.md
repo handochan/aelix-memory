@@ -14,7 +14,7 @@ Reported benchmark results belong to the cited systems; they are not Aelix resul
 | [Hindsight (2025)](https://arxiv.org/abs/2512.12818) | Distinguish evidence, experiences and beliefs; temporal/entity-aware retain/recall/reflect | Preserve source roles, quotes and receipts; automatic extraction stays agent-derived and never relabels an inference as independently observed fact. Reflection is a later evaluated layer. |
 | [MemDelta (June 2026)](https://arxiv.org/abs/2606.29914) | Architecture rankings depend on models, embeddings and baseline controls | Fix backbone, embeddings, corpus and context budget in comparisons; measure writing cost, latency, recall and answer quality independently. No "best" claim from local tests. |
 | [Agent Zero Memory (August 2026)](https://arxiv.org/abs/2608.29606) | Parallel representations, intent gating and citation-backed reading | Adopt citations and declared provenance now. Citation-locked answers require host enforcement and are not claimed by this adapter. Full graph/documentary layers remain research candidates. |
-| [Letta memory blocks](https://docs.letta.com/v1-sdk/memory/memory-blocks), [attach/detach](https://docs.letta.com/tutorials/attaching-detaching-blocks/) | Explicit access control and read-only memory | Persist per-project OFF / READ / ON modes; ON authorizes automatic learning without per-record review. |
+| [Letta memory blocks](https://docs.letta.com/v1-sdk/memory/memory-blocks), [attach/detach](https://docs.letta.com/tutorials/attaching-detaching-blocks/) | Explicit access control and read-only memory | Global OFF / READ / ON usage with project-isolated knowledge; ON authorizes automatic learning without per-record review. |
 
 ## Current host evidence
 
@@ -64,10 +64,16 @@ provide named context with explicit limits and read-only access. These are usefu
 bounded-context designs, not evidence that copying their storage structure yields
 better recall or guaranteed cache hits.
 
-Aelix 0.4.0 keeps selected evidence at its first emitted session position, then
-adds newly relevant records. It retains a strict total context bound and validates
-current source revisions before reuse. This preserves previous request prefixes
-until consent, correctness or context boundaries require invalidation. Automatic
-extraction orders stable inputs first and uses a project/session-scoped request key.
-Provider settings stay with the host. See [ADR-0005](decisions/0005-cache-stable-recall.md)
-and [separate structural/live measurements](verification/cache-0.4.0.md).
+The 2026-10-12 design follows the documented
+[OpenAI Sandbox Agents memory](https://developers.openai.com/api/docs/guides/agents/sandboxes)
+reading pattern: an initial summary, an index when prior work matters, and detail
+only when needed. This source describes SDK memory, not every Codex client.
+
+Aelix 0.4.0 provides one bounded startup snapshot with short core source quotes
+and topic labels/IDs. The snapshot remains fixed across turns; no automatic query
+search or newly learned record is injected each turn. The agent uses `memory_recall`
+and `memory_get` when detail or newer evidence is needed. Automatic writes update
+the store for tool queries and the next session. Consent and source invalidation
+take priority over cache stability. Provider settings stay with the host. See
+[ADR-0005](decisions/0005-cache-stable-recall.md) and
+[separate structural/live measurements](verification/cache-0.4.0.md).

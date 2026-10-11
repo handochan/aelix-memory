@@ -1,5 +1,6 @@
 {
   "synthetic_data_only": true,
+  "implementation": "fixed startup summary; no per-turn automatic retrieval",
   "metric": "serialized visible input bytes, not cache tokens",
   "structural": {
     "baseline": [
@@ -21,18 +22,18 @@
     ],
     "improved": [
       {
-        "previous_bytes": 13395,
-        "shared_prefix_bytes": 13395,
+        "previous_bytes": 14788,
+        "shared_prefix_bytes": 14788,
         "previous_prefix_preserved": true
       },
       {
-        "previous_bytes": 20176,
-        "shared_prefix_bytes": 20176,
+        "previous_bytes": 20724,
+        "shared_prefix_bytes": 20724,
         "previous_prefix_preserved": true
       },
       {
-        "previous_bytes": 26117,
-        "shared_prefix_bytes": 26117,
+        "previous_bytes": 26665,
+        "shared_prefix_bytes": 26665,
         "previous_prefix_preserved": true
       }
     ]
@@ -43,25 +44,25 @@
     "usage": {
       "baseline": [
         {
-          "input": 2533,
+          "input": 2528,
           "output": 32,
           "cache_read": 0,
           "cache_write": null
         },
         {
-          "input": 3448,
+          "input": 3449,
           "output": 32,
           "cache_read": 1792,
           "cache_write": null
         },
         {
-          "input": 4363,
+          "input": 4358,
           "output": 32,
           "cache_read": 2816,
           "cache_write": null
         },
         {
-          "input": 5278,
+          "input": 5279,
           "output": 32,
           "cache_read": 3840,
           "cache_write": null
@@ -69,33 +70,31 @@
       ],
       "improved": [
         {
-          "input": 2532,
+          "input": 2818,
           "output": 32,
           "cache_read": 0,
           "cache_write": null
         },
         {
-          "input": 3655,
-          "output": 32,
+          "input": 3733,
+          "output": 11,
           "cache_read": 2304,
           "cache_write": null
         },
         {
-          "input": 4570,
+          "input": 4648,
           "output": 32,
           "cache_read": 3328,
           "cache_write": null
         },
         {
-          "input": 5485,
+          "input": 5563,
           "output": 32,
           "cache_read": 4352,
           "cache_write": null
         }
       ]
     },
-    "note": "Observed fixture usage; retention, routing and backend policy affect hits.",
-    "isolation": "Distinct run/variant namespace at the beginning of the system prompt; both initial cache reads were zero."
-  },
-  "at": "2026-10-11"
+    "note": "Observed fixture usage; retention, routing and backend policy affect hits."
+  }
 }

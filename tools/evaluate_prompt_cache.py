@@ -1,4 +1,4 @@
-"""Compare 0.3.0 and append-only recall through real converters; optional live usage."""
+"""Compare 0.3.0 recall with a fixed startup summary; optional live cache usage."""
 
 from __future__ import annotations
 
@@ -33,6 +33,7 @@ async def compare(provider: str | None, model_id: str | None) -> dict:
     from aelix_memory.extension import MemoryExtension, _RecallMessage
     from aelix_memory.models import Draft
     from aelix_memory.scope import Scope
+    from aelix_memory.startup import usage_prompt
     from aelix_memory.store import Store
 
     def wire(context):
@@ -104,7 +105,9 @@ async def compare(provider: str | None, model_id: str | None) -> dict:
             result = await extension.context(ContextHookEvent(messages=list(history)), ctx)
             new = result.messages if result else list(history)
             contexts["baseline"].append(Context(system_prompt=static, messages=old, tools=[]))
-            contexts["improved"].append(Context(system_prompt=static, messages=new, tools=[]))
+            contexts["improved"].append(
+                Context(system_prompt=usage_prompt(static, enabled=True), messages=new, tools=[])
+            )
             history.append(
                 AssistantMessage(
                     content=[TextContent(text=("Synthetic response about the project. " * 150))]
@@ -128,6 +131,7 @@ async def compare(provider: str | None, model_id: str | None) -> dict:
         assert not any(p["previous_prefix_preserved"] for p in structural["baseline"])
         report = {
             "synthetic_data_only": True,
+            "implementation": "fixed startup summary; no per-turn automatic retrieval",
             "metric": "serialized visible input bytes, not cache tokens",
             "structural": structural,
             "live": None,

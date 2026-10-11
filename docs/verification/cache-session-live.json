@@ -1,40 +1,67 @@
 {
-  "at": "2026-10-11T08:19:32.906681+00:00",
+  "at": "2026-10-11T18:44:26.700304+00:00",
   "provider": "openrouter",
   "model": "openai/gpt-5.4-mini",
   "synthetic_data_only": true,
-  "manual_memory_writes": 0,
-  "approvals": 0,
-  "tools_disabled": true,
-  "same_session": true,
-  "stable_prefix_before_correction": true,
-  "superseded_overlay_removed": true,
-  "old_overlay_absent": true,
-  "current_overlay_present": true,
-  "current_lexical_hits_before_turn": 1,
-  "correction_keeps_history": true,
+  "manual_fixture_core_records": 4,
+  "manual_target_writes": 0,
+  "per_memory_approvals": 0,
+  "automatic_target_has_matched_quote": true,
+  "unrelated_turn_tool_calls": [],
+  "on_demand_tool_calls": [
+    "memory_get"
+  ],
+  "available_lookup_tools": [
+    "memory_recall",
+    "memory_get"
+  ],
+  "trusted_lookup_policy_present": true,
+  "target_detail_absent_from_startup": true,
+  "stable_prefix_during_lookup": true,
+  "superseded_summary_entry_removed": true,
+  "same_session_read_kept_preference_revision": true,
+  "package_preference_after_read": {
+    "kind": "preference",
+    "source_role": "user",
+    "starts_with_question": false,
+    "contains_npm": true
+  },
+  "updated_record_not_automatically_injected": true,
+  "next_session_uses_updated_summary": true,
   "recall_not_persisted": true,
   "cases": [
     {
-      "case": "learn",
+      "case": "automatic_procedure_learning",
       "expected": "ACK",
       "answer": "ACK",
       "passed": true
     },
     {
-      "case": "recall",
-      "expected": "pnpm",
-      "answer": "pnpm",
+      "case": "unrelated_turn",
+      "expected": "HELLO",
+      "answer": "HELLO",
       "passed": true
     },
     {
-      "case": "correct",
+      "case": "on_demand_procedure_recall",
+      "expected": "The archive-recovery procedure for this project is: verify the manifest, restore the latest snapshot, run the ARCHIVE-731 checksum, and compare the recovered record count before resuming service.",
+      "answer": "The archive-recovery procedure for this project is: verify the manifest, restore the latest snapshot, run the ARCHIVE-731 checksum, and compare the recovered record count before resuming service.",
+      "passed": true
+    },
+    {
+      "case": "automatic_correction",
       "expected": "ACK",
       "answer": "ACK",
       "passed": true
     },
     {
-      "case": "corrected_recall",
+      "case": "same_session_corrected_answer",
+      "expected": "npm",
+      "answer": "npm",
+      "passed": true
+    },
+    {
+      "case": "next_session_uses_updated_summary",
       "expected": "npm",
       "answer": "npm",
       "passed": true

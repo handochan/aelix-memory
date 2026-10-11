@@ -5,6 +5,7 @@ Date: 2026-10-08
 Supersedes: ADR-0001 approval/extraction policy
 Superseded by: [ADR-0003](0003-global-usage-settings.md) for consent scope and settings;
 automatic extraction and provenance decisions remain accepted.
+Superseded by: [ADR-0005](0005-cache-stable-recall.md) for recall cadence and placement.
 
 ## Decision
 
@@ -31,6 +32,10 @@ agent-derived and source role/quote/receipt remain visible. A matched quote veri
 the passage, not the truth of its claim. Trivial, transient, hypothetical or sensitive
 information is excluded. Explicit requests not to remember an exchange suppress
 learning. Detected credentials suppress the exchange before any extra model call.
+The parser additionally rejects known lookup questions and response-format requests,
+including their fragments from query-only user sources; these are not new property
+assertions. Automatic keyed corrections retain the existing property kind. These
+checks supplement model extraction and do not cover every possible language form.
 
 ON permits automatic active writes. The write transaction checks scope, current
 consent generation, cancellation and the expected previous revision. OFF, READ,

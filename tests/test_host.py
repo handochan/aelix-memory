@@ -213,6 +213,7 @@ def build(
     monkeypatch,
     *,
     tool_call=None,
+    tool_on_request=1,
     permission_mode=PermissionMode.DEFAULT,
     active_tool_names=None,
     extractor=None,
@@ -231,7 +232,7 @@ def build(
 
     async def stream(_model, context, _options):
         captured.append(context)
-        if tool_call and len(captured) == 1:
+        if tool_call and len(captured) == tool_on_request:
             message = AssistantMessage(content=[tool_call], stop_reason="toolUse")
         else:
             message = AssistantMessage(content=[TextContent(text="done")], stop_reason=reply_reason)
@@ -285,14 +286,30 @@ async def test_normal_host_conversation_learns_without_tools_or_approval_and_sur
     assert enabled.list(scope, status="pending") == []
 
 
-async def test_next_turn_drains_learning_and_recall_is_ephemeral(enabled, scope, monkeypatch):
-    harness, captured, storage, _, _ = build(scope, enabled.home, monkeypatch)
+async def test_next_turn_drains_learning_and_model_can_recall_it_through_a_tool(
+    enabled, scope, monkeypatch
+):
+    call = ToolCallContent(
+        tool_call_id="learned-memory", tool_name="memory_recall", input={"query": "pnpm"}
+    )
+    harness, captured, storage, _, _ = build(
+        scope, enabled.home, monkeypatch, tool_call=call, tool_on_request=2
+    )
     await harness._emit_session_start("startup")
     await harness.prompt("I always use pnpm in this project.")
     await harness.prompt("Which package manager uses pnpm?")
     memory = enabled.search(scope, "pnpm").hits[0].memory
-    assert any(memory.citation in str(m.content) for m in captured[-1].messages)
-    assert not any(memory.citation in str(m.content) for m in harness.state.messages)
+    results = [
+        m for m in harness.state.messages if getattr(m, "tool_call_id", None) == "learned-memory"
+    ]
+    assert results and not results[0].is_error and memory.citation in str(results[0].content)
+    from aelix_memory.extension import _RecallMessage
+
+    assert not any(
+        memory.citation in str(m.content)
+        for m in captured[-1].messages
+        if isinstance(m, _RecallMessage)
+    )
     assert not any("<aelix_memory" in str(e) for e in await storage.get_entries())
     await harness._emit_session_shutdown("quit")
 

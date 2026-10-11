@@ -80,6 +80,57 @@ async def test_corrections_and_identical_repeated_facts_are_automatic(enabled, s
 
 
 @pytest.mark.parametrize(
+    "question",
+    [
+        "Which package manager do I use now? Reply only with its name.",
+        "Which package manager do I use now?Reply only with its name.",
+        "What is my package manager?",
+        "Do we use npm?",
+        "Tell me which package manager we use.",
+        "Reply only with the package manager name.",
+        "이 프로젝트의 패키지 매니저는 무엇인가요? 이름만 답해주세요.",
+        "어떤 패키지 매니저를 사용하나요?",
+    ],
+)
+async def test_question_extracted_by_a_model_cannot_replace_a_preference(enabled, scope, question):
+    old = enabled.add(
+        scope,
+        Draft(
+            "Package manager", "Use npm.", "user-command", kind="preference", key="package-manager"
+        ),
+    )
+    learner = Learner(enabled, extractor=Extractor())
+    learner.start(exchange(enabled, scope, question, "lookup"), None, None)
+    await learner.drain()
+    assert enabled.current_keys(scope)["package-manager"].id == old.id
+    assert len(enabled.list(scope, status="all")) == 1
+
+
+def test_correction_keeps_existing_property_kind_and_assertions_are_not_queries(enabled, scope):
+    old = enabled.add(
+        scope,
+        Draft(
+            "Package manager", "Use pnpm.", "user-command", kind="preference", key="package-manager"
+        ),
+    )
+    statement = "I always use npm. Which installer is suitable?"
+    notes = parse_extraction(payload(statement, kind="fact"), exchange(enabled, scope, statement))
+    assert notes and notes[0].previous_id == old.id
+    assert notes[0].draft.kind == "preference"
+
+
+def test_fragments_of_queries_are_rejected_but_facts_after_format_requests_are_allowed(
+    enabled, scope
+):
+    question = "Which package manager do I use? Reply only with its name."
+    assert parse_extraction(payload("package manager"), exchange(enabled, scope, question)) == ()
+    statement = "Reply only ACK. I always use npm in this project."
+    assert parse_extraction(
+        payload("I always use npm in this project."), exchange(enabled, scope, statement)
+    )
+
+
+@pytest.mark.parametrize(
     "text",
     [
         "Do not remember this conversation.",
