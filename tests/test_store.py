@@ -255,3 +255,24 @@ def test_different_declared_sources_and_links_are_not_lost_as_duplicates(enabled
         "docs/testing.md:12",
         "docs/testing.md:20",
     }
+
+
+def test_unkeyed_revision_uses_exact_active_id_and_parallel_edit_has_one_winner(enabled, scope):
+    from concurrent.futures import ThreadPoolExecutor
+
+    old = enabled.add(scope, draft("Initial note"))
+
+    def edit(text):
+        try:
+            return enabled.add(scope, draft(text), supersedes=old.id)
+        except ConflictError:
+            return None
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(edit, ["First edit", "Second edit"]))
+    assert sum(result is not None for result in results) == 1
+    current = enabled.list(scope)[0]
+    assert current.key is None and current.family_id == old.family_id
+    assert len(enabled.history(scope, current.id)) == 2
+    with pytest.raises(ConflictError):
+        enabled.add(scope, draft("Changed key", key="invented"), supersedes=current.id)

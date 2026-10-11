@@ -3,16 +3,20 @@
 Natural persistent memory for Aelix. Enable it once; important preferences,
 project decisions and useful lessons are extracted, stored and recalled automatically.
 
-Memory starts OFF globally. Installing/loading the extension or opening settings creates
-no memory files. Enable **Memory** in Aelix `/settings` once; that choice persists across
-projects, sessions and process restarts. You can also use the same global setting:
+Memory starts OFF globally. Installing/loading the extension or opening its panel
+creates no memory files. Enter **`/memory`** to open the control panel, then select
+**Memory: OFF** to turn it ON globally. The choice persists across projects,
+sessions and process restarts. The panel uses existing public extension dialogs
+and works without the host's settings-registration API or any host code change.
+You can also use the same global setting directly:
 
 ```text
 /memory on
 /memory off
 ```
 
-The settings row requires a host with `ExtensionAPI.register_setting` (Aelix host
+On hosts that expose `ExtensionAPI.register_setting`, the extension also contributes
+a **Memory** row in `/settings`. The settings row requires that API (Aelix host
 [Issue #403](https://github.com/handochan/aelix-ai/issues/403)). On older hosts,
 `/memory on` and `/memory off` provide the same global choice.
 
@@ -55,6 +59,14 @@ passage, not the truth of its claim. Current instructions and fresh evidence tak
 precedence over memory.
 
 Inspection and management are optional:
+
+The `/memory` panel offers ON/OFF, automatic learning or recall-only mode,
+project-scoped browsing/search, content and source details, revision history,
+manual save/edit/forget, and non-overwriting JSON export. Advanced options show
+status, all records, any legacy pending proposals, local semantic reindex and
+command help. Esc/Back cancels without saving. No individual automatic memory
+needs approval. `/memory panel` opens the same panel; headless invocation returns
+status, and explicit subcommands still work:
 
 ```text
 /memory status

@@ -1,6 +1,7 @@
 """Real host hooks, loop, permissions and session persistence, with a deterministic extractor."""
 
 import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -20,6 +21,95 @@ from aelix_memory.learning import parse_extraction
 from aelix_memory.models import Draft
 
 pytestmark = pytest.mark.host
+
+
+def command_context(extension, scope):
+    from aelix_coding_agent.extensions.api import ExtensionContext
+
+    return ExtensionContext(
+        extension.api.runtime,
+        cwd=str(scope.root),
+        model=None,
+        is_idle=lambda: True,
+        abort=lambda: None,
+        get_active_tools=extension.api.get_active_tools,
+        get_system_prompt=lambda: "",
+        session_manager=SimpleNamespace(get_session=lambda: None),
+    )
+
+
+async def test_bare_memory_opens_panel_without_settings_api_and_updates_global_mode(
+    store, scope, monkeypatch, tmp_path
+):
+    from test_panel import UI
+
+    monkeypatch.delattr(ExtensionAPI, "register_setting", raising=False)
+    _, _, _, pack, extension = build(scope, store.home, monkeypatch)
+    ui = UI(["Memory: OFF (global)", "Close"])
+    extension.api.runtime.bind_ui(ui)
+    ctx = command_context(extension, scope)
+    assert await pack.commands["memory"].handler("", ctx) == "Memory panel closed."
+    other = tmp_path / "other"
+    other.mkdir()
+    from aelix_memory.scope import Scope
+
+    assert extension.store.mode(Scope.for_project(other)) == "on"
+    extension.api.runtime.bind_ui(UI(["Memory: ON (global)", "Close"]))
+    await extension.command("panel", ctx)
+    assert extension.store.global_mode() == "off"
+
+
+async def test_headless_bare_command_and_explicit_status_remain_read_only(
+    store, scope, monkeypatch
+):
+    from test_panel import UI
+
+    _, _, _, _, extension = build(scope, store.home, monkeypatch)
+    ctx = command_context(extension, scope)
+    assert json.loads(await extension.command("", ctx))["mode"] == "off"
+    assert json.loads(await extension.command("panel", ctx))["mode"] == "off"
+    extension.api.runtime.bind_ui(UI([]))
+    assert json.loads(await extension.command("status", ctx))["mode"] == "off"
+    assert not store.home.exists()
+
+
+async def test_panel_and_read_commands_do_not_start_indexing_or_mutate_on_store(
+    enabled, scope, monkeypatch
+):
+    from test_panel import UI
+
+    _, _, _, _, extension = build(scope, enabled.home, monkeypatch)
+    indexed = []
+    monkeypatch.setattr(extension, "index_in_background", lambda: indexed.append(True))
+    ctx = command_context(extension, scope)
+    before = enabled.path.read_bytes()
+    assert json.loads(await extension.command("status", ctx))["mode"] == "on"
+    extension.api.runtime.bind_ui(UI([None]))
+    await extension.command("", ctx)
+    assert indexed == [] and enabled.path.read_bytes() == before
+
+
+async def test_manual_action_clears_earlier_exchange_capture_and_stale_panel_cannot_write(
+    enabled, scope, monkeypatch
+):
+    from aelix_coding_agent.extensions.api import ExtensionError
+    from test_panel import UI
+
+    _, _, _, _, extension = build(scope, enabled.home, monkeypatch)
+    ctx = command_context(extension, scope)
+    extension._prompt, extension._turn_id = "I always use pnpm.", "older-turn"
+    await extension.command("remember --key runner Use pytest.", ctx)
+    assert extension._prompt == "" and extension._turn_id is None
+
+    def expire(title, options):
+        extension.api.runtime.invalidate()
+        return options[0]
+
+    extension.api.runtime.bind_ui(UI([expire]))
+    before = enabled.path.read_bytes()
+    with pytest.raises(ExtensionError):
+        await extension.command("", ctx)
+    assert enabled.path.read_bytes() == before
 
 
 async def test_extraction_accepts_real_canonical_provider_done_event(enabled, scope, monkeypatch):

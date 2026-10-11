@@ -1,7 +1,7 @@
 [plugin]
 id = "aelix-memory"
 name = "Aelix Memory"
-version = "0.2.0"
+version = "0.3.0"
 description = "Enable memory globally once; learn and recall project knowledge automatically"
 authors = ["Aelix Contributors"]
 repository = "https://github.com/handochan/aelix-memory"
@@ -27,4 +27,4 @@ on_command = ["memory"]
 
 [[contributes.commands]]
 id = "memory"
-description = "Turn automatic memory on/off and optionally inspect, export or forget memories"
+description = "Open the memory control panel; set global usage and manage project memories"

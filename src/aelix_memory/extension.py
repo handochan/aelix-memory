@@ -8,7 +8,7 @@ import json
 import shlex
 import sqlite3
 import uuid
-from typing import Any
+from typing import Any, cast
 
 from aelix_agent_core.harness.hooks import (
     AgentEndHookEvent,
@@ -28,6 +28,7 @@ from .commands import parser, run
 from .context import render_context
 from .learning import Exchange, Extractor, Learner, sources_for
 from .models import MemoryError
+from .panel import MemoryPanel, PanelUI
 from .scope import Scope
 
 _TOOL_NAMES = ("memory_recall", "memory_get")
@@ -204,21 +205,40 @@ class MemoryExtension:
                 raise MemoryError("Slash commands use the current host project.")
             if tokens and (tokens[0] == "help" or "--help" in tokens or "-h" in tokens):
                 return parser().format_help()
-            parsed = parser().parse_args(tokens or ["status"])
             await self.bind(ctx)
             assert self.scope is not None
-            if parsed.command in {"off", "read", "forget"}:
-                self.cancel()
-            output = await asyncio.to_thread(run, self.store, self.scope, parsed)
-            self.sync_tools()
-            self.index_in_background()
-            return terminal_text(output)
+            scope = self.scope
+            if not tokens or tokens == ["panel"]:
+                if ctx.has_ui:
+
+                    async def execute(operation: list[str]) -> str:
+                        ctx.assert_active()
+                        return await self.manage(scope, operation)
+
+                    return await MemoryPanel(
+                        self.store, scope, cast(PanelUI, ctx.ui), execute
+                    ).open()
+                tokens = ["status"]
+            return await self.manage(scope, tokens)
         except MemoryError as exc:
             return "Memory: " + terminal_text(str(exc))
         except (sqlite3.Error, OSError, ValueError):
             return "Memory unavailable: check the project path and user-owned storage."
         except SystemExit:
             return parser().format_help()
+
+    async def manage(self, scope: Scope, tokens: list[str]) -> str:
+        """Run an explicit user action; reads never start indexing or capture."""
+        parsed = parser().parse_args(tokens)
+        if parsed.command in {"off", "read", "forget", "remember", "update", "approve", "discard"}:
+            self.cancel()
+            self._prompt = ""
+            self._turn_id = None
+        output = await asyncio.to_thread(run, self.store, scope, parsed)
+        self.sync_tools()
+        if parsed.command in {"on", "remember", "update", "approve"}:
+            self.index_in_background()
+        return terminal_text(output)
 
     async def tool(self, name: str, args: dict[str, Any], ctx: ToolExecutionContext) -> ToolResult:
         try:
@@ -276,7 +296,7 @@ def register(api: ExtensionAPI, *, extractor: Extractor | None = None) -> Memory
     api.register_command(
         "memory",
         handler=extension.command,
-        description="Turn natural memory on/off and optionally inspect, export or forget records.",
+        description="Open the memory control panel, or use on/off and optional management commands.",
     )
     api.on("session_start", extension.session_start, error_mode="continue")
     api.on("before_agent_start", extension.before_start, error_mode="continue")
