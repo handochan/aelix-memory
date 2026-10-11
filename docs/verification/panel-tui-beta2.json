@@ -1,0 +1,145 @@
+{
+  "passed": true,
+  "synthetic_data_only": true,
+  "model_requests": 0,
+  "default_and_cancel_created_no_store": true,
+  "global_across_projects": true,
+  "project_isolation": true,
+  "external_off_preserves_intent": true,
+  "unkeyed_edit_and_history": true,
+  "final_mode": "off",
+  "screens": [
+    {
+      "size": [
+        80,
+        24
+      ],
+      "screen": "opened",
+      "lines": [
+        "Memory \u2014 project-0",
+        "Knowledge stays in this project.",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "\u25b8 Memory: OFF (global)",
+        "  Learning mode: disabled",
+        "  Browse memories",
+        "  Search memories",
+        "  Remember something",
+        "  Export project memories",
+        "  Details and advanced options",
+        "  Close",
+        "  (1/8)",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "\u2191/\u2193 move \u00b7 type to filter \u00b7 Enter select \u00b7 Esc cancel",
+        "\u25cf default  \u00b7  \ud83d\udcc2 /private/var/folders/1x/8y9_c2pn73ngk5md9yh17z900000gn/T/aelix-"
+      ]
+    },
+    {
+      "size": [
+        80,
+        24
+      ],
+      "screen": "memory-actions",
+      "lines": [
+        "\u2500\u2500 Panel runner \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "\u25b8 View content and source",
+        "  Revision history",
+        "  Edit memory",
+        "  Forget entire memory history",
+        "  Back",
+        "  (1/5)",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "\u2191/\u2193 move \u00b7 type to filter \u00b7 Enter select \u00b7 Esc cancel",
+        "\u25cf default  \u00b7  \ud83d\udcc2 /private/var/folders/1x/8y9_c2pn73ngk5md9yh17z900000gn/T/aelix-"
+      ]
+    },
+    {
+      "size": [
+        80,
+        24
+      ],
+      "screen": "enabled",
+      "lines": [
+        "Memory \u2014 project-0",
+        "Knowledge stays in this project.",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "\u25b8 Memory: ON (global)",
+        "  Learning mode: automatic",
+        "  Browse memories",
+        "  Search memories",
+        "  Remember something",
+        "  Export project memories",
+        "  Details and advanced options",
+        "  Close",
+        "  (1/8)",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "\u2191/\u2193 move \u00b7 type to filter \u00b7 Enter select \u00b7 Esc cancel",
+        "\u25cf default  \u00b7  \ud83d\udcc2 /private/var/folders/1x/8y9_c2pn73ngk5md9yh17z900000gn/T/aelix-"
+      ]
+    },
+    {
+      "size": [
+        120,
+        42
+      ],
+      "screen": "opened",
+      "lines": [
+        "Memory \u2014 project-1",
+        "Knowledge stays in this project.",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "\u25b8 Memory: ON (global)",
+        "  Learning mode: automatic",
+        "  Browse memories",
+        "  Search memories",
+        "  Remember something",
+        "  Export project memories",
+        "  Details and advanced options",
+        "  Close",
+        "  (1/8)",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "\u2191/\u2193 move \u00b7 type to filter \u00b7 Enter select \u00b7 Esc cancel",
+        "\u25cf default  \u00b7  \ud83d\udcc2 /private/var/folders/1x/8y9_c2pn73ngk5md9yh17z900000gn/T/aelix-memory-panel-pty-9ghyya1b/project-1  \u00b7"
+      ]
+    },
+    {
+      "size": [
+        120,
+        42
+      ],
+      "screen": "isolated",
+      "lines": [
+        "Project memories (1/1)",
+        "No matching memories in this project.",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "\u25b8 Back",
+        "  (1/1)",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "\u2191/\u2193 move \u00b7 type to filter \u00b7 Enter select \u00b7 Esc cancel",
+        "\u25cf default  \u00b7  \ud83d\udcc2 /private/var/folders/1x/8y9_c2pn73ngk5md9yh17z900000gn/T/aelix-memory-panel-pty-9ghyya1b/project-1  \u00b7"
+      ]
+    },
+    {
+      "size": [
+        120,
+        42
+      ],
+      "screen": "disabled",
+      "lines": [
+        "Memory \u2014 project-1",
+        "Knowledge stays in this project.",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "\u25b8 Memory: OFF (global)",
+        "  Learning mode: disabled",
+        "  Browse memories",
+        "  Search memories",
+        "  Remember something",
+        "  Export project memories",
+        "  Details and advanced options",
+        "  Close",
+        "  (1/8)",
+        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "\u2191/\u2193 move \u00b7 type to filter \u00b7 Enter select \u00b7 Esc cancel",
+        "\u25cf default  \u00b7  \ud83d\udcc2 /private/var/folders/1x/8y9_c2pn73ngk5md9yh17z900000gn/T/aelix-memory-panel-pty-9ghyya1b/project-1  \u00b7"
+      ]
+    }
+  ]
+}

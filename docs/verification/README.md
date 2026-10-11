@@ -1,5 +1,12 @@
 # Aelix Memory verification
 
+## Extension-owned panel candidate (0.3.0)
+
+See [panel-0.3.0.md](panel-0.3.0.md) for source, installed-wheel, released beta.2,
+actual PTY and separate provider/semantic evidence. `/memory` opens its own panel
+through existing public dialogs, independently of `register_setting`.
+
+
 ## Current global usage and settings (0.2.0)
 
 The current consent/settings contract is

@@ -330,9 +330,7 @@ class Store:
                 if not self._visible(self._resolve(connection, scope, related), at):
                     raise MemoryError("Related IDs must refer to current memories in this project.")
             previous = self._resolve(connection, scope, supersedes) if supersedes else None
-            if previous and (
-                previous.status != "active" or previous.key is None or previous.key != draft.key
-            ):
+            if previous and (previous.status != "active" or previous.key != draft.key):
                 raise ConflictError("Replacement requires the current revision and its exact key.")
             current = (
                 connection.execute(

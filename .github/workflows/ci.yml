@@ -53,3 +53,23 @@ jobs:
       - run: uv run python tools/install_ci_wheel.py
       - run: uv run --no-sync aelix extension verify aelix-memory
       - run: uv run --no-sync pytest -m host -q
+
+  released-host-panel:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ['3.11', '3.12', '3.13']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.23'
+          python-version: ${{ matrix.python }}
+      - run: uv sync --locked
+      - run: uv pip install 'aelix[tui]==0.1.0b2'
+      - run: uv build
+      - run: uv run python tools/install_ci_wheel.py
+      - run: uv run --no-sync aelix extension verify aelix-memory
+      - run: uv run --no-sync pytest tests/test_host.py -k 'bare_memory or headless_bare or panel_and_read or manual_action' -q
