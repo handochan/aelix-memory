@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hashlib
 import json
 import shlex
 import sqlite3
@@ -25,10 +26,10 @@ from aelix_coding_agent.extensions.api import ExtensionAPI, ExtensionContext
 
 from .cli import configured_store, terminal_text
 from .commands import parser, run
-from .context import render_context
 from .learning import Exchange, Extractor, Learner, sources_for
 from .models import MemoryError
 from .panel import MemoryPanel, PanelUI
+from .recall import Anchor, RecallLedger
 from .scope import Scope
 
 _TOOL_NAMES = ("memory_recall", "memory_get")
@@ -59,6 +60,8 @@ class MemoryExtension:
         self._prompt = ""
         self._consent = 0
         self._index_task: asyncio.Task | None = None
+        self._recall = RecallLedger()
+        self._recall_lock = asyncio.Lock()
 
     async def bind(self, ctx: ExtensionContext) -> None:
         self.scope = Scope.for_project(ctx.cwd)
@@ -87,6 +90,7 @@ class MemoryExtension:
         return self.store.global_mode() != "off"
 
     async def set_memory_enabled(self, enabled: bool) -> None:
+        self._recall.clear()
         if not enabled:
             self.cancel()
             self._prompt = ""
@@ -114,6 +118,7 @@ class MemoryExtension:
         self._index_task = asyncio.create_task(index())
 
     async def session_start(self, _event: SessionStartHookEvent, ctx: ExtensionContext) -> None:
+        self._recall.clear()
         await self.bind(ctx)
         self.index_in_background()
 
@@ -166,6 +171,7 @@ class MemoryExtension:
         self, _event: SessionShutdownHookEvent, _ctx: ExtensionContext
     ) -> None:
         await self.learner.drain()
+        self._recall.clear()
         if self._index_task is not None:
             try:
                 await asyncio.wait_for(asyncio.shield(self._index_task), timeout=3)
@@ -175,28 +181,80 @@ class MemoryExtension:
     async def context(self, event: ContextHookEvent, ctx: ExtensionContext) -> ContextResult | None:
         messages = [m for m in event.messages if not isinstance(m, _RecallMessage)]
         scope = Scope.for_project(ctx.cwd)
-        if self.store.mode(scope) == "off":
-            return (
-                ContextResult(messages=messages) if len(messages) != len(event.messages) else None
-            )
-        user_index = next(
-            (i for i in range(len(messages) - 1, -1, -1) if isinstance(messages[i], UserMessage)),
-            None,
-        )
-        if user_index is None:
-            return None
-        query = " ".join(c.text for c in messages[user_index].content if isinstance(c, TextContent))
-        if not query.strip() or len(query.encode()) > 2000:
-            return None
-        try:
-            result = await asyncio.to_thread(self.store.search, scope, query)
-            rendered = render_context(result.hits)
-            if not rendered or self.store.mode(scope) == "off":
-                return None
-        except (MemoryError, sqlite3.Error, OSError):
-            return None
-        messages.insert(user_index, _RecallMessage(content=[TextContent(text=rendered)]))
-        return ContextResult(messages=messages)
+        async with self._recall_lock:
+            try:
+                if self.store.mode(scope) == "off":
+                    self._recall.clear()
+                    return ContextResult(messages=messages) if messages != event.messages else None
+                epoch = (scope.id, self.session_id, self.store.consent_token(scope))
+                positions: dict[int, Anchor] = {}
+                queries: dict[Anchor, str] = {}
+                occurrences: dict[str, int] = {}
+                for index, message in enumerate(messages):
+                    if not isinstance(message, UserMessage):
+                        continue
+                    text = " ".join(c.text for c in message.content if isinstance(c, TextContent))
+                    signature = hashlib.sha256(
+                        f"{message.timestamp!r}\0{text}".encode()
+                    ).hexdigest()
+                    ordinal = occurrences.get(signature, 0)
+                    occurrences[signature] = ordinal + 1
+                    anchor = (signature, ordinal)
+                    positions[index], queries[anchor] = anchor, text
+                self._recall.prepare(epoch, set(positions.values()))
+                records = self._recall.records()
+
+                def current_records(ids):
+                    current = {}
+                    for mid in ids:
+                        with contextlib.suppress(MemoryError):
+                            current[mid] = self.store.get(scope, mid, agent=True)
+                    return current
+
+                current = await asyncio.to_thread(current_records, records) if records else {}
+                if self._recall.epoch != epoch or self.store.consent_token(scope) != epoch[2]:
+                    self._recall.clear()
+                    return ContextResult(messages=messages) if messages != event.messages else None
+                self._recall.prune(current)
+                if positions:
+                    latest = positions[max(positions)]
+                    query = queries[latest]
+                    if latest not in self._recall.seen:
+                        hits = ()
+                        if query.strip() and len(query.encode()) <= 2000:
+                            hits = (await asyncio.to_thread(self.store.search, scope, query)).hits
+                            # Search/embedding may yield while another process forgets or revises
+                            # evidence. Revalidate both old blocks and newly selected records.
+                            ids = self._recall.records().keys() | {hit.memory.id for hit in hits}
+                            current = await asyncio.to_thread(current_records, ids) if ids else {}
+                        if (
+                            self._recall.epoch != epoch
+                            or self.store.consent_token(scope) != epoch[2]
+                        ):
+                            self._recall.clear()
+                            return (
+                                ContextResult(messages=messages)
+                                if messages != event.messages
+                                else None
+                            )
+                        self._recall.prune(current)
+                        hits = tuple(
+                            hit for hit in hits if current.get(hit.memory.id) == hit.memory
+                        )
+                        self._recall.append(latest, hits)
+                if self.store.mode(scope) == "off":
+                    self._recall.clear()
+                    return ContextResult(messages=messages) if messages != event.messages else None
+                result = []
+                for index, message in enumerate(messages):
+                    text = self._recall.get(positions[index]) if index in positions else ""
+                    if text:
+                        result.append(_RecallMessage(content=[TextContent(text=text)]))
+                    result.append(message)
+                return ContextResult(messages=result) if result != event.messages else None
+            except (MemoryError, sqlite3.Error, OSError):
+                self._recall.clear()
+                return ContextResult(messages=messages) if messages != event.messages else None
 
     async def command(self, args: str, ctx: ExtensionContext) -> str:
         try:
@@ -231,6 +289,7 @@ class MemoryExtension:
         """Run an explicit user action; reads never start indexing or capture."""
         parsed = parser().parse_args(tokens)
         if parsed.command in {"off", "read", "forget", "remember", "update", "approve", "discard"}:
+            self._recall.clear()
             self.cancel()
             self._prompt = ""
             self._turn_id = None

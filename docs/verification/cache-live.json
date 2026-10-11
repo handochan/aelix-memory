@@ -1,0 +1,101 @@
+{
+  "synthetic_data_only": true,
+  "metric": "serialized visible input bytes, not cache tokens",
+  "structural": {
+    "baseline": [
+      {
+        "previous_bytes": 13395,
+        "shared_prefix_bytes": 12490,
+        "previous_prefix_preserved": false
+      },
+      {
+        "previous_bytes": 19333,
+        "shared_prefix_bytes": 18427,
+        "previous_prefix_preserved": false
+      },
+      {
+        "previous_bytes": 25272,
+        "shared_prefix_bytes": 24363,
+        "previous_prefix_preserved": false
+      }
+    ],
+    "improved": [
+      {
+        "previous_bytes": 13395,
+        "shared_prefix_bytes": 13395,
+        "previous_prefix_preserved": true
+      },
+      {
+        "previous_bytes": 20176,
+        "shared_prefix_bytes": 20176,
+        "previous_prefix_preserved": true
+      },
+      {
+        "previous_bytes": 26117,
+        "shared_prefix_bytes": 26117,
+        "previous_prefix_preserved": true
+      }
+    ]
+  },
+  "live": {
+    "provider": "openrouter",
+    "model": "openai/gpt-5.4-mini",
+    "usage": {
+      "baseline": [
+        {
+          "input": 2533,
+          "output": 32,
+          "cache_read": 0,
+          "cache_write": null
+        },
+        {
+          "input": 3448,
+          "output": 32,
+          "cache_read": 1792,
+          "cache_write": null
+        },
+        {
+          "input": 4363,
+          "output": 32,
+          "cache_read": 2816,
+          "cache_write": null
+        },
+        {
+          "input": 5278,
+          "output": 32,
+          "cache_read": 3840,
+          "cache_write": null
+        }
+      ],
+      "improved": [
+        {
+          "input": 2532,
+          "output": 32,
+          "cache_read": 0,
+          "cache_write": null
+        },
+        {
+          "input": 3655,
+          "output": 32,
+          "cache_read": 2304,
+          "cache_write": null
+        },
+        {
+          "input": 4570,
+          "output": 32,
+          "cache_read": 3328,
+          "cache_write": null
+        },
+        {
+          "input": 5485,
+          "output": 32,
+          "cache_read": 4352,
+          "cache_write": null
+        }
+      ]
+    },
+    "note": "Observed fixture usage; retention, routing and backend policy affect hits.",
+    "isolation": "Distinct run/variant namespace at the beginning of the system prompt; both initial cache reads were zero."
+  },
+  "at": "2026-10-11"
+}

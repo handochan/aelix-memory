@@ -58,6 +58,22 @@ exchange and detected credentials suppress extraction. Source matching verifies 
 passage, not the truth of its claim. Current instructions and fresh evidence take
 precedence over memory.
 
+Recall preserves previously emitted memory blocks within a session and appends
+new relevant records with the latest user turn. It searches once per user turn,
+keeps stable system instructions and tool definitions, and avoids rewriting
+earlier request prefixes during tool iterations. The temporary memory context is
+bounded to 12 KiB total, 4 KiB per block and 64 turn anchors; it is never saved to
+host transcripts. Deleted, revised or expired records are removed before reuse.
+OFF/ON cycles, project/session changes, compaction and budget eviction invalidate
+affected blocks. Correctness takes priority over a cache hit.
+
+This makes memory compatible with provider prefix caching; actual cache hits and
+savings depend on the model, routing and retention policy. Automatic extraction
+also uses stable instructions, deterministic memory ordering and a session-scoped
+request key. The extension does not pad prompts or override provider cache settings.
+See [the cache policy](docs/decisions/0005-cache-stable-recall.md) and
+[measured comparisons](docs/verification/cache-0.4.0.md).
+
 Inspection and management are optional:
 
 The `/memory` panel offers ON/OFF, automatic learning or recall-only mode,

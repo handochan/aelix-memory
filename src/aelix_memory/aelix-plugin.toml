@@ -1,7 +1,7 @@
 [plugin]
 id = "aelix-memory"
 name = "Aelix Memory"
-version = "0.3.0"
+version = "0.4.0"
 description = "Enable memory globally once; learn and recall project knowledge automatically"
 authors = ["Aelix Contributors"]
 repository = "https://github.com/handochan/aelix-memory"

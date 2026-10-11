@@ -45,3 +45,29 @@ retrieval before selecting a shipped embedding default. Automatic extraction use
 bounded completed exchanges and matched source quotes through the current host route.
 Full graph inference, autonomous consolidation and cloud synchronization remain
 separate evaluated improvements.
+
+## Prompt caching review (2026-10-11)
+
+[OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching)
+recommends preserving conversation history and appending new messages. The
+[Codex example](https://developers.openai.com/cookbook/examples/prompt_caching_201)
+shows fixed instructions/tools and runtime updates appended to the conversation;
+its older API/model details are not assumed to apply to every current model.
+[Claude caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
+also matches the rendered prefix across tools, system and messages. Changing an
+early memory block can invalidate later history even when the system prompt is fixed.
+
+[Claude Code memory](https://code.claude.com/docs/en/memory) documents a bounded
+startup index (the first 200 lines or 25 KB of MEMORY.md), with topic files loaded
+when needed. [Letta memory blocks](https://docs.letta.com/v1-sdk/memory/memory-blocks)
+provide named context with explicit limits and read-only access. These are useful
+bounded-context designs, not evidence that copying their storage structure yields
+better recall or guaranteed cache hits.
+
+Aelix 0.4.0 keeps selected evidence at its first emitted session position, then
+adds newly relevant records. It retains a strict total context bound and validates
+current source revisions before reuse. This preserves previous request prefixes
+until consent, correctness or context boundaries require invalidation. Automatic
+extraction orders stable inputs first and uses a project/session-scoped request key.
+Provider settings stay with the host. See [ADR-0005](decisions/0005-cache-stable-recall.md)
+and [separate structural/live measurements](verification/cache-0.4.0.md).

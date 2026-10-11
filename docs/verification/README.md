@@ -1,5 +1,11 @@
 # Aelix Memory verification
 
+## Cache-stable recall candidate (0.4.0)
+
+See [cache-0.4.0.md](cache-0.4.0.md) for actual provider input transformations,
+isolated synthetic live cache metrics, installed-wheel gates and separate
+same-session automatic learning/correction evidence. No host code changes are used.
+
 ## Extension-owned panel candidate (0.3.0)
 
 See [panel-0.3.0.md](panel-0.3.0.md) for source, installed-wheel, released beta.2,

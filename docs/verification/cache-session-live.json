@@ -1,0 +1,44 @@
+{
+  "at": "2026-10-11T08:19:32.906681+00:00",
+  "provider": "openrouter",
+  "model": "openai/gpt-5.4-mini",
+  "synthetic_data_only": true,
+  "manual_memory_writes": 0,
+  "approvals": 0,
+  "tools_disabled": true,
+  "same_session": true,
+  "stable_prefix_before_correction": true,
+  "superseded_overlay_removed": true,
+  "old_overlay_absent": true,
+  "current_overlay_present": true,
+  "current_lexical_hits_before_turn": 1,
+  "correction_keeps_history": true,
+  "recall_not_persisted": true,
+  "cases": [
+    {
+      "case": "learn",
+      "expected": "ACK",
+      "answer": "ACK",
+      "passed": true
+    },
+    {
+      "case": "recall",
+      "expected": "pnpm",
+      "answer": "pnpm",
+      "passed": true
+    },
+    {
+      "case": "correct",
+      "expected": "ACK",
+      "answer": "ACK",
+      "passed": true
+    },
+    {
+      "case": "corrected_recall",
+      "expected": "npm",
+      "answer": "npm",
+      "passed": true
+    }
+  ],
+  "passed": true
+}

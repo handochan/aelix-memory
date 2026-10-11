@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hashlib
 import json
 import re
 import threading
@@ -171,11 +172,11 @@ class HostExtractor:
             raise MemoryError("The current host authentication route is unavailable.")
         memories = [
             {"key": key, "title": value.title, "kind": value.kind}
-            for key, value in list(exchange.current.items())[:20]
+            for key, value in sorted(exchange.current.items())[:20]
         ]
         payload = {
-            "sources": [{"role": s.role, "text": s.text} for s in exchange.sources],
             "existing": memories,
+            "sources": [{"role": s.role, "text": s.text} for s in exchange.sources],
         }
         options = SimpleStreamOptions(
             api_key=auth.api_key,
@@ -183,7 +184,10 @@ class HostExtractor:
             max_tokens=1024,
             max_retries=0,
             timeout_ms=12000,
-            session_id=f"memory:{exchange.turn_id}",
+            session_id="memory-extract:"
+            + hashlib.sha256(
+                f"{exchange.scope.id}\0{exchange.session_id or 'ephemeral'}".encode()
+            ).hexdigest()[:32],
         )
         stream = await stream_simple(
             model,
