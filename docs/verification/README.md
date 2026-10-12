@@ -1,5 +1,12 @@
 # Aelix Memory verification
 
+## Fixed startup summary and on-demand recall candidate (0.4.0)
+
+See [cache-0.4.0.md](cache-0.4.0.md) for actual provider input transformations,
+isolated synthetic cache metrics, installed-wheel gates and actual model-directed
+detail lookup/automatic correction. The 4 KiB startup snapshot stays fixed; there
+is no per-turn automatic search or context expansion. No host code changes are used.
+
 ## Extension-owned panel candidate (0.3.0)
 
 See [panel-0.3.0.md](panel-0.3.0.md) for source, installed-wheel, released beta.2,

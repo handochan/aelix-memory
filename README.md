@@ -58,6 +58,34 @@ exchange and detected credentials suppress extraction. Source matching verifies 
 passage, not the truth of its claim. Current instructions and fresh evidence take
 precedence over memory.
 
+At the first provider request, memory supplies a fixed startup summary and topic
+index for the current project. It contains short source quotes for core preferences,
+procedures and facts, plus labels/IDs for further topics, within 4 KiB total.
+Separate fixed usage instructions explain when to query and distinguish topic
+labels from stored record contents. User memory never enters those system instructions.
+The snapshot stays at the same position and is never saved to host transcripts.
+There is no per-turn automatic search or growing series of injected memory blocks.
+When a task needs detail or newer evidence, the agent can call `memory_recall`
+and `memory_get`; unrelated tasks need no lookup. Existing host tool permissions
+and explicit tool selection remain in effect.
+
+Automatic learning continues after completed exchanges. New records become
+available immediately through the tools and enter the next session's startup
+summary. Learning and manual edits do not refresh or expand the current snapshot.
+Deleted, revised or expired entries are removed before reuse; replacement records
+require a tool lookup or a new session. OFF and OFF/ON cycles revoke earlier work.
+Project/session changes capture a fresh scoped snapshot. Correctness takes
+priority over a cache hit.
+
+Initial injection means keeping the same snapshot in later requests, so earlier
+input stays available for prefix caching. Tool results use ordinary appended
+conversation history. Actual cache hits and
+savings depend on the model, routing and retention policy. Automatic extraction
+also uses stable instructions, deterministic memory ordering and a session-scoped
+request key. The extension does not pad prompts or override provider cache settings.
+See [the cache policy](docs/decisions/0005-cache-stable-recall.md) and
+[measured comparisons](docs/verification/cache-0.4.0.md).
+
 Inspection and management are optional:
 
 The `/memory` panel offers ON/OFF, automatic learning or recall-only mode,

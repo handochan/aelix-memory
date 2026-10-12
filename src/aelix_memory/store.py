@@ -184,6 +184,38 @@ class Store:
         with self._connect() as connection:
             return self._consent_token(connection, scope) if connection else 0
 
+    def revision_token(self, scope: Scope) -> int:
+        """Read-only project write receipt for validating asynchronous memory reads."""
+        with self._connect() as connection:
+            if connection is None:
+                return 0
+            row = connection.execute(
+                "SELECT max(id) FROM audit WHERE scope=?", (scope.id,)
+            ).fetchone()
+            return int(row[0] or 0)
+
+    def startup_memories(self, scope: Scope, *, limit: int = 64) -> tuple[Memory, ...]:
+        """Bounded agent snapshot; prioritize core rules before applying the limit."""
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 64:
+            raise MemoryError("Startup snapshot limit must be between 1 and 64.")
+        at = now_iso()
+        with self._connect() as connection:
+            if connection is None:
+                raise ConsentError("Memory is OFF.")
+            self._require(connection, scope)
+            version = connection.execute("PRAGMA user_version").fetchone()[0]
+            trusted = "origin='user'" if version == 1 else "origin='user' OR source_role='user'"
+            rows = connection.execute(
+                "SELECT * FROM memories WHERE scope=? AND status='active' AND valid_from<=? "
+                "AND (valid_until IS NULL OR valid_until>?) AND (expires_at IS NULL OR expires_at>?) "
+                "ORDER BY CASE kind WHEN 'preference' THEN 0 WHEN 'procedure' THEN 1 "
+                "WHEN 'fact' THEN 2 ELSE 3 END, "
+                f"CASE WHEN {trusted} THEN 0 ELSE 1 END, "
+                "created_at DESC,id LIMIT ?",
+                (scope.id, at, at, at, limit),
+            ).fetchall()
+            return tuple(_memory(row) for row in rows)
+
     @staticmethod
     def _check_learning(
         connection: sqlite3.Connection,

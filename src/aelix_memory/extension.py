@@ -13,6 +13,7 @@ from typing import Any, cast
 from aelix_agent_core.harness.hooks import (
     AgentEndHookEvent,
     BeforeAgentStartHookEvent,
+    BeforeAgentStartResult,
     ContextHookEvent,
     ContextResult,
     SessionShutdownHookEvent,
@@ -25,11 +26,11 @@ from aelix_coding_agent.extensions.api import ExtensionAPI, ExtensionContext
 
 from .cli import configured_store, terminal_text
 from .commands import parser, run
-from .context import render_context
 from .learning import Exchange, Extractor, Learner, sources_for
-from .models import MemoryError
+from .models import MemoryError, now_iso
 from .panel import MemoryPanel, PanelUI
 from .scope import Scope
+from .startup import StartupMemory, usage_prompt
 
 _TOOL_NAMES = ("memory_recall", "memory_get")
 
@@ -59,6 +60,8 @@ class MemoryExtension:
         self._prompt = ""
         self._consent = 0
         self._index_task: asyncio.Task | None = None
+        self._startup = StartupMemory()
+        self._startup_lock = asyncio.Lock()
 
     async def bind(self, ctx: ExtensionContext) -> None:
         self.scope = Scope.for_project(ctx.cwd)
@@ -87,6 +90,7 @@ class MemoryExtension:
         return self.store.global_mode() != "off"
 
     async def set_memory_enabled(self, enabled: bool) -> None:
+        self._startup.clear()
         if not enabled:
             self.cancel()
             self._prompt = ""
@@ -114,10 +118,13 @@ class MemoryExtension:
         self._index_task = asyncio.create_task(index())
 
     async def session_start(self, _event: SessionStartHookEvent, ctx: ExtensionContext) -> None:
+        self._startup.clear()
         await self.bind(ctx)
         self.index_in_background()
 
-    async def before_start(self, event: BeforeAgentStartHookEvent, ctx: ExtensionContext) -> None:
+    async def before_start(
+        self, event: BeforeAgentStartHookEvent, ctx: ExtensionContext
+    ) -> BeforeAgentStartResult | None:
         incoming = Scope.for_project(ctx.cwd)
         if (
             self.scope != incoming
@@ -133,6 +140,10 @@ class MemoryExtension:
         self._prompt = event.prompt if enabled else ""
         self._consent = self.store.consent_token(self.scope)
         self.index_in_background()
+        prompt = usage_prompt(event.system_prompt, enabled=self.store.mode(self.scope) != "off")
+        return (
+            BeforeAgentStartResult(system_prompt=prompt) if prompt != event.system_prompt else None
+        )
 
     async def agent_end(self, event: AgentEndHookEvent, ctx: ExtensionContext) -> None:
         if self.scope is None or self._turn_id is None or self.store.mode(self.scope) != "on":
@@ -166,6 +177,7 @@ class MemoryExtension:
         self, _event: SessionShutdownHookEvent, _ctx: ExtensionContext
     ) -> None:
         await self.learner.drain()
+        self._startup.clear()
         if self._index_task is not None:
             try:
                 await asyncio.wait_for(asyncio.shield(self._index_task), timeout=3)
@@ -175,28 +187,62 @@ class MemoryExtension:
     async def context(self, event: ContextHookEvent, ctx: ExtensionContext) -> ContextResult | None:
         messages = [m for m in event.messages if not isinstance(m, _RecallMessage)]
         scope = Scope.for_project(ctx.cwd)
-        if self.store.mode(scope) == "off":
-            return (
-                ContextResult(messages=messages) if len(messages) != len(event.messages) else None
-            )
-        user_index = next(
-            (i for i in range(len(messages) - 1, -1, -1) if isinstance(messages[i], UserMessage)),
-            None,
-        )
-        if user_index is None:
-            return None
-        query = " ".join(c.text for c in messages[user_index].content if isinstance(c, TextContent))
-        if not query.strip() or len(query.encode()) > 2000:
-            return None
-        try:
-            result = await asyncio.to_thread(self.store.search, scope, query)
-            rendered = render_context(result.hits)
-            if not rendered or self.store.mode(scope) == "off":
-                return None
-        except (MemoryError, sqlite3.Error, OSError):
-            return None
-        messages.insert(user_index, _RecallMessage(content=[TextContent(text=rendered)]))
-        return ContextResult(messages=messages)
+        async with self._startup_lock:
+            try:
+                if self.store.mode(scope) == "off":
+                    self._startup.clear()
+                    return ContextResult(messages=messages) if messages != event.messages else None
+                epoch = (scope.id, self.session_id, self.store.consent_token(scope))
+                self._startup.prepare(epoch)
+                loaded = self._startup.loaded
+
+                def current_records():
+                    # Startup reads metadata once; later calls only validate captured IDs.
+                    candidates = (
+                        tuple(entry.memory for entry in self._startup.entries)
+                        if loaded
+                        else self.store.startup_memories(scope)
+                    )
+                    current = {}
+                    for memory in candidates:
+                        with contextlib.suppress(MemoryError):
+                            current[memory.id] = self.store.get(scope, memory.id, agent=True)
+                    return current
+
+                for attempt in range(2):
+                    revision = self.store.revision_token(scope)
+                    current = await asyncio.to_thread(current_records)
+                    if self._startup.epoch != epoch or self.store.consent_token(scope) != epoch[2]:
+                        self._startup.clear()
+                        return (
+                            ContextResult(messages=messages) if messages != event.messages else None
+                        )
+                    if self.store.revision_token(scope) == revision:
+                        break
+                    if attempt == 1:
+                        self._startup.prune({})
+                        return (
+                            ContextResult(messages=messages) if messages != event.messages else None
+                        )
+                at = now_iso()
+                current = {mid: m for mid, m in current.items() if self.store._visible(m, at)}
+                if not loaded:
+                    self._startup.capture(tuple(current.values()))
+                else:
+                    self._startup.prune(current)
+                if self.store.mode(scope) == "off" or self.store.consent_token(scope) != epoch[2]:
+                    self._startup.clear()
+                    return ContextResult(messages=messages) if messages != event.messages else None
+                text = self._startup.render()
+                result = (
+                    [_RecallMessage(content=[TextContent(text=text)]), *messages]
+                    if text
+                    else messages
+                )
+                return ContextResult(messages=result) if result != event.messages else None
+            except (MemoryError, sqlite3.Error, OSError):
+                self._startup.prune({})
+                return ContextResult(messages=messages) if messages != event.messages else None
 
     async def command(self, args: str, ctx: ExtensionContext) -> str:
         try:
@@ -231,6 +277,8 @@ class MemoryExtension:
         """Run an explicit user action; reads never start indexing or capture."""
         parsed = parser().parse_args(tokens)
         if parsed.command in {"off", "read", "forget", "remember", "update", "approve", "discard"}:
+            if parsed.command in {"off", "read"}:
+                self._startup.clear()
             self.cancel()
             self._prompt = ""
             self._turn_id = None
@@ -306,7 +354,7 @@ def register(api: ExtensionAPI, *, extractor: Extractor | None = None) -> Memory
     api.add_cleanup(extension.cancel)
     definitions = {
         "memory_recall": (
-            "Retrieve current project memories and citations. Learning happens automatically; no memory write or approval tool is needed.",
+            "Search current project memories when a task depends on prior preferences, decisions, procedures or work and the startup summary is insufficient or may be outdated. No lookup is needed for unrelated tasks. Learning happens automatically; no write or approval tool is needed.",
             {
                 "query": {"type": "string", "maxLength": 2000},
                 "limit": {"type": "integer", "minimum": 1, "maximum": 20},
